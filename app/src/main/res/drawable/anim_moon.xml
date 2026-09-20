@@ -1,0 +1,10 @@
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_moon">
+
+    <target
+        android:name="moon_path"
+        android:animation="@animator/fade_in_out" />
+
+</animated-vector>
+
