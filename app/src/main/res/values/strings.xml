@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Weather App</string>
-    <string name="search_hint">Search city</string>
+    <string name="search_hint">Search city worldwide&#8230;</string>
     <string name="humidity_label">Humidity</string>
     <string name="wind_label">Wind</string>
     <string name="air_quality_label">Air Quality</string>
     <string name="visibility_label">Visibility</string>
-    <string name="forecast_title">Forecast</string>
+    <string name="forecast_title">Hourly &amp; Daily Forecast</string>
     <string name="location_icon_desc">Location</string>
     <string name="weather_icon_desc">Weather icon</string>
     <string name="menu_desc">Menu</string>
@@ -13,5 +13,9 @@
     <string name="check_for_updates">Check for Updates</string>
     <string name="update_app">Update App</string>
     <string name="app_version">Version 1.0</string>
-    <string name="current_version_status">Current version: 1.0</string>
+    <string name="current_version_status">Current version: 1.0 (Up to date)</string>
+    <string name="system_status">System Status</string>
+    <string name="feels_like_label">Feels like</string>
+    <string name="high_low_label">High / Low</string>
+    <string name="pressure_label">Pressure</string>
 </resources>

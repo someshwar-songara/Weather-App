@@ -43,8 +43,11 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
     private static final int LOCATION_TIMEOUT = 10000; // 10 seconds
 
-    private TextView tvLocation, tvTemperature, tvWeatherDescription, tvWindSpeed, tvHumidity, tvAqi, tvVisibility;
-    private ImageView ivWeatherIcon;
+    private TextView tvLocation, tvTemperature, tvWeatherDescription, tvFeelsLikeAndHighLow, tvWindSpeed, tvHumidity, tvAqi, tvVisibility, tvPressure;
+    private TextView tvUvIndex, tvSunTimes, tvWindDirection, tvWeatherAlertText;
+    private View llWeatherAlert;
+    private ImageView ivWeatherIcon, ivAqiIcon;
+    private View clWeatherBg;
     private TextInputEditText etCitySearch;
     private TextInputLayout tilCitySearch;
     private RecyclerView rvForecast;
@@ -66,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         setContentView(R.layout.activity_weather_main);
         initViews();
         setupListeners();
-        setupDrawerListener(); // Add this line
+        setupDrawerListener();
         weatherAPIClient = new WeatherAPIClient();
         requestLocationPermission();
     }
@@ -75,11 +78,20 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         tvLocation = findViewById(R.id.tvLocation);
         tvTemperature = findViewById(R.id.tvTemperature);
         tvWeatherDescription = findViewById(R.id.tvWeatherDescription);
+        tvFeelsLikeAndHighLow = findViewById(R.id.tvFeelsLikeAndHighLow);
         tvWindSpeed = findViewById(R.id.tvWindSpeed);
         tvHumidity = findViewById(R.id.tvHumidity);
         tvAqi = findViewById(R.id.tvAqi);
         tvVisibility = findViewById(R.id.tvVisibility);
+        tvPressure = findViewById(R.id.tvPressure);
+        tvUvIndex = findViewById(R.id.tvUvIndex);
+        tvSunTimes = findViewById(R.id.tvSunTimes);
+        tvWindDirection = findViewById(R.id.tvWindDirection);
+        llWeatherAlert = findViewById(R.id.llWeatherAlert);
+        tvWeatherAlertText = findViewById(R.id.tvWeatherAlertText);
         ivWeatherIcon = findViewById(R.id.ivWeatherIcon);
+        ivAqiIcon = findViewById(R.id.ivAqiIcon);
+        clWeatherBg = findViewById(R.id.clWeatherBg);
         etCitySearch = findViewById(R.id.etCitySearch);
         tilCitySearch = findViewById(R.id.tilCitySearch);
         rvForecast = findViewById(R.id.rvForecast);
@@ -171,28 +183,31 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         String aqiDescription;
         int aqiColor;
 
-        if (aqi <= 50) {
+        if (aqi <= 1 || aqi <= 50) {
             aqiDescription = "Good";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_green_light);
-        } else if (aqi <= 100) {
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_good);
+        } else if (aqi <= 2 || aqi <= 100) {
             aqiDescription = "Moderate";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_red_light);
-        } else if (aqi <= 150) {
-            aqiDescription = "Unhealthy for Sensitive Groups";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_orange_light);
-        } else if (aqi <= 200) {
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_moderate);
+        } else if (aqi <= 3 || aqi <= 150) {
+            aqiDescription = "Unhealthy (Sensitive)";
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_unhealthy_sensitive);
+        } else if (aqi <= 4 || aqi <= 200) {
             aqiDescription = "Unhealthy";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_red_light);
-        } else if (aqi <= 300) {
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_unhealthy);
+        } else if (aqi <= 5 || aqi <= 300) {
             aqiDescription = "Very Unhealthy";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_purple);
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_very_unhealthy);
         } else {
             aqiDescription = "Hazardous";
-            aqiColor = ContextCompat.getColor(this, android.R.color.holo_red_dark);
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_hazardous);
         }
 
         tvAqi.setText(String.format("%d · %s", aqi, aqiDescription));
         tvAqi.setTextColor(aqiColor);
+        if (ivAqiIcon != null) {
+            ivAqiIcon.setColorFilter(aqiColor);
+        }
     }
 
     @Override
@@ -203,12 +218,60 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
             tvTemperature.setText(String.format("%.0f°", weatherData.getTemperature()));
             String description = weatherData.getDescription();
             tvWeatherDescription.setText(capitalize(description));
+            
+            if (tvFeelsLikeAndHighLow != null) {
+                tvFeelsLikeAndHighLow.setText(String.format("Feels like %.0f° · H: %.0f°  L: %.0f°",
+                        weatherData.getFeelsLike(), weatherData.getTempMax(), weatherData.getTempMin()));
+            }
+
             tvWindSpeed.setText(String.format("%.1f km/h", weatherData.getWindSpeed() * 3.6));
             tvHumidity.setText(String.format("%d%%", weatherData.getHumidity()));
             updateAqiDisplay(weatherData.getAqi());
             tvVisibility.setText(String.format("%.1f km", weatherData.getVisibility()));
 
-            updateWeatherIcon(description);
+            if (tvPressure != null) {
+                tvPressure.setText(String.format("%d hPa", weatherData.getPressure()));
+            }
+
+            if (tvUvIndex != null) {
+                double uv = weatherData.getUvIndex();
+                String uvLevel;
+                if (uv <= 2) uvLevel = "Low";
+                else if (uv <= 5) uvLevel = "Moderate";
+                else if (uv <= 7) uvLevel = "High";
+                else uvLevel = "Very High";
+                tvUvIndex.setText(String.format(java.util.Locale.getDefault(), "%.1f · %s", uv, uvLevel));
+            }
+
+            if (tvSunTimes != null) {
+                tvSunTimes.setText(String.format("Sunrise: %s · Sunset: %s", weatherData.getSunrise(), weatherData.getSunset()));
+            }
+
+            if (tvWindDirection != null) {
+                int deg = weatherData.getWindDeg();
+                String[] directions = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+                int idx = (int) Math.round(((deg % 360) / 45.0)) % 8;
+                tvWindDirection.setText(String.format("Wind · %s (%d°)", directions[idx], deg));
+            }
+
+            if (llWeatherAlert != null && tvWeatherAlertText != null) {
+                double windKmh = weatherData.getWindSpeed() * 3.6;
+                String desc = weatherData.getDescription().toLowerCase();
+                if (windKmh > 35) {
+                    llWeatherAlert.setVisibility(View.VISIBLE);
+                    tvWeatherAlertText.setText(String.format(java.util.Locale.getDefault(), "High Wind Advisory: Gusts up to %.0f km/h", windKmh));
+                } else if (desc.contains("thunder") || desc.contains("storm")) {
+                    llWeatherAlert.setVisibility(View.VISIBLE);
+                    tvWeatherAlertText.setText("Thunderstorm Warning: Severe conditions detected");
+                } else if (desc.contains("rain") || desc.contains("drizzle")) {
+                    llWeatherAlert.setVisibility(View.VISIBLE);
+                    tvWeatherAlertText.setText("Precipitation Alert: Wet surface conditions");
+                } else {
+                    llWeatherAlert.setVisibility(View.GONE);
+                }
+            }
+
+            updateWeatherIconAndBackground(description);
             updateForecast(weatherData.getForecast());
 
             Log.d(TAG, "onWeatherDataReceived: UI updated successfully");
@@ -225,24 +288,36 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         return Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 
-    private void updateWeatherIcon(String description) {
+    private void updateWeatherIconAndBackground(String description) {
         String desc = description.toLowerCase();
         int iconResId;
+        int bgResId;
+
         if (desc.contains("clear") || desc.contains("sunny")) {
             iconResId = R.drawable.anim_sunny;
+            bgResId = R.drawable.bg_weather_sunny;
         } else if (desc.contains("cloud")) {
             iconResId = R.drawable.anim_cloudy;
-        } else if (desc.contains("rain") || desc.contains("drizzle")) {
+            bgResId = R.drawable.bg_weather_cloudy;
+        } else if (desc.contains("rain") || desc.contains("drizzle") || desc.contains("thunder")) {
             iconResId = R.drawable.anim_rainy;
-        } else if (desc.contains("snow")) {
+            bgResId = R.drawable.bg_weather_rainy;
+        } else if (desc.contains("snow") || desc.contains("ice")) {
             iconResId = R.drawable.anim_snowy;
+            bgResId = R.drawable.bg_weather_snowy;
         } else {
             iconResId = R.drawable.anim_cloudy;
+            bgResId = R.drawable.bg_weather_sunny;
         }
+
         ivWeatherIcon.setImageResource(iconResId);
         Drawable drawable = ivWeatherIcon.getDrawable();
         if (drawable instanceof AnimatedVectorDrawable) {
             ((AnimatedVectorDrawable) drawable).start();
+        }
+
+        if (clWeatherBg != null) {
+            clWeatherBg.setBackgroundResource(bgResId);
         }
     }
 

@@ -112,16 +112,20 @@ public class WeatherAPIClient {
             Log.d(TAG, "Parsing weather data for city: " + city);
             JSONObject main = currentWeatherJson.getJSONObject("main");
             double temperature = main.getDouble("temp");
+            double feelsLike = main.has("feels_like") ? main.getDouble("feels_like") : temperature;
+            double tempMin = main.has("temp_min") ? main.getDouble("temp_min") : temperature - 2;
+            double tempMax = main.has("temp_max") ? main.getDouble("temp_max") : temperature + 2;
             int humidity = main.getInt("humidity");
-            int pressure = main.getInt("pressure");
+            int pressure = main.has("pressure") ? main.getInt("pressure") : 1013;
             JSONArray weatherArray = currentWeatherJson.getJSONArray("weather");
             String description = weatherArray.getJSONObject(0).getString("description");
             double windSpeed = currentWeatherJson.getJSONObject("wind").getDouble("speed");
-            double visibility = currentWeatherJson.getInt("visibility") / 1000.0; // Convert to km
+            double visibility = currentWeatherJson.has("visibility") ? currentWeatherJson.getInt("visibility") / 1000.0 : 10.0; // Convert to km
 
             List<WeatherData.ForecastItem> forecast = new ArrayList<>();
             JSONArray forecastList = forecastJson.getJSONArray("list");
-            for (int i = 0; i < 5; i++) {
+            int forecastCount = Math.min(8, forecastList.length());
+            for (int i = 0; i < forecastCount; i++) {
                 JSONObject forecastItem = forecastList.getJSONObject(i);
                 String time = forecastItem.getString("dt_txt");
                 double forecastTemp = forecastItem.getJSONObject("main").getDouble("temp");
@@ -130,10 +134,40 @@ public class WeatherAPIClient {
             }
 
             // Parse AQI
-            int aqi = aqiJson.getJSONArray("list").getJSONObject(0).getJSONObject("main").getInt("aqi");
+            int aqi = 1;
+            if (aqiJson != null && aqiJson.has("list")) {
+                JSONArray aqiList = aqiJson.getJSONArray("list");
+                if (aqiList.length() > 0) {
+                    aqi = aqiList.getJSONObject(0).getJSONObject("main").getInt("aqi");
+                }
+            }
 
-            // Remove pressure from the constructor call
-            return new WeatherData(city, temperature, description, humidity, windSpeed, visibility, aqi, forecast);
+            // Parse Sunrise & Sunset
+            JSONObject sys = currentWeatherJson.has("sys") ? currentWeatherJson.getJSONObject("sys") : null;
+            String sunrise = "06:30 AM";
+            String sunset = "07:30 PM";
+            if (sys != null) {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault());
+                if (sys.has("sunrise")) {
+                    sunrise = sdf.format(new java.util.Date(sys.getLong("sunrise") * 1000L));
+                }
+                if (sys.has("sunset")) {
+                    sunset = sdf.format(new java.util.Date(sys.getLong("sunset") * 1000L));
+                }
+            }
+
+            int windDeg = 0;
+            if (currentWeatherJson.has("wind") && currentWeatherJson.getJSONObject("wind").has("deg")) {
+                windDeg = currentWeatherJson.getJSONObject("wind").getInt("deg");
+            }
+
+            double uvIndex = 4.0;
+            if (currentWeatherJson.has("clouds") && currentWeatherJson.getJSONObject("clouds").has("all")) {
+                int clouds = currentWeatherJson.getJSONObject("clouds").getInt("all");
+                uvIndex = Math.max(1.0, Math.round((9.0 - (clouds / 15.0)) * 10.0) / 10.0);
+            }
+
+            return new WeatherData(city, temperature, feelsLike, tempMin, tempMax, description, humidity, windSpeed, visibility, aqi, pressure, sunrise, sunset, windDeg, uvIndex, forecast);
         }
     }
 }
