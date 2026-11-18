@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -27,6 +28,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -35,6 +42,9 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -60,6 +70,8 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
     private Button btnCheckForUpdates, btnUpdateApp;
     private TextView tvUpdateStatus;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private WebView webView3D;
+    private WeatherData currentWeatherData;
     private int menuIconRes = R.drawable.ic_menu_colorful;
     private int closeIconRes = R.drawable.ic_close;
 
@@ -103,6 +115,8 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         btnCheckForUpdates = findViewById(R.id.btnCheckForUpdates);
         btnUpdateApp = findViewById(R.id.btnUpdateApp);
         tvUpdateStatus = findViewById(R.id.tvUpdateStatus);
+
+        initWebView3D();
     }
 
     private void setupListeners() {
@@ -273,6 +287,9 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
 
             updateWeatherIconAndBackground(description);
             updateForecast(weatherData.getForecast());
+
+            this.currentWeatherData = weatherData;
+            pushWeatherDataToWeb();
 
             Log.d(TAG, "onWeatherDataReceived: UI updated successfully");
         } catch (Exception e) {
@@ -476,6 +493,123 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
                 }
             }
         });
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void initWebView3D() {
+        webView3D = findViewById(R.id.webView3D);
+        if (webView3D != null) {
+            WebSettings webSettings = webView3D.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            webSettings.setDomStorageEnabled(true);
+            webSettings.setAllowFileAccess(true);
+            webSettings.setAllowContentAccess(true);
+            webSettings.setLoadsImagesAutomatically(true);
+            webSettings.setMediaPlaybackRequiresUserGesture(false);
+            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+            webView3D.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            webView3D.setBackgroundColor(0xFF080E1D);
+
+            webView3D.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                    Log.d("Weather3D_JS", consoleMessage.message() + " -- Line "
+                            + consoleMessage.lineNumber() + " of " + consoleMessage.sourceId());
+                    return true;
+                }
+            });
+
+            webView3D.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    Log.d(TAG, "3D Weather Webview loaded: " + url);
+                    pushWeatherDataToWeb();
+                }
+            });
+
+            webView3D.addJavascriptInterface(new WeatherAppBridge(), "AndroidBridge");
+            webView3D.loadUrl("file:///android_asset/weather3d/index.html");
+        }
+    }
+
+    private void pushWeatherDataToWeb() {
+        if (webView3D == null || currentWeatherData == null) return;
+        try {
+            JSONObject json = new JSONObject();
+            json.put("city", currentWeatherData.getCity());
+            json.put("temperature", currentWeatherData.getTemperature());
+            json.put("feelsLike", currentWeatherData.getFeelsLike());
+            json.put("tempMin", currentWeatherData.getTempMin());
+            json.put("tempMax", currentWeatherData.getTempMax());
+            json.put("description", currentWeatherData.getDescription());
+            json.put("humidity", currentWeatherData.getHumidity());
+            json.put("windSpeed", currentWeatherData.getWindSpeed());
+            json.put("windDeg", currentWeatherData.getWindDeg());
+            json.put("visibility", currentWeatherData.getVisibility());
+            json.put("aqi", currentWeatherData.getAqi());
+            json.put("pressure", currentWeatherData.getPressure());
+            json.put("sunrise", currentWeatherData.getSunrise());
+            json.put("sunset", currentWeatherData.getSunset());
+            json.put("uvIndex", currentWeatherData.getUvIndex());
+
+            JSONArray forecastArray = new JSONArray();
+            if (currentWeatherData.getForecast() != null) {
+                for (WeatherData.ForecastItem item : currentWeatherData.getForecast()) {
+                    JSONObject fItem = new JSONObject();
+                    fItem.put("time", item.getTime());
+                    fItem.put("temperature", item.getTemperature());
+                    fItem.put("description", item.getDescription());
+                    forecastArray.put(fItem);
+                }
+            }
+            json.put("forecast", forecastArray);
+
+            String script = "if (window.updateWeatherFromAndroid) { window.updateWeatherFromAndroid(" + json.toString() + "); }";
+            runOnUiThread(() -> webView3D.evaluateJavascript(script, null));
+        } catch (Exception e) {
+            Log.e(TAG, "Error pushing data to 3D WebView", e);
+        }
+    }
+
+    public class WeatherAppBridge {
+        @JavascriptInterface
+        public void searchCity(String city) {
+            runOnUiThread(() -> {
+                if (city != null && !city.trim().isEmpty()) {
+                    if (etCitySearch != null) etCitySearch.setText(city);
+                    showProgressDialog("Searching for " + city);
+                    weatherAPIClient.getWeatherData(city.trim(), MainActivity.this);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestCurrentLocation() {
+            runOnUiThread(() -> getLocation());
+        }
+
+        @JavascriptInterface
+        public void toggleMenu() {
+            runOnUiThread(() -> MainActivity.this.toggleMenu());
+        }
+
+        @JavascriptInterface
+        public void onWebReady() {
+            runOnUiThread(() -> pushWeatherDataToWeb());
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            drawerLayout.closeDrawer(GravityCompat.END);
+        } else if (webView3D != null && webView3D.canGoBack()) {
+            webView3D.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
 

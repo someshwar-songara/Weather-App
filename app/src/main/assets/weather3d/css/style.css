@@ -1,0 +1,1251 @@
+/* ==========================================================================
+   Atmosphere 3D - Futuristic Premium Weather Application Stylesheet
+   Google Stitch Design System & Raytraced Glassmorphism
+   ========================================================================== */
+
+:root {
+    --bg-dark: #080e1d;
+    --surface: #0d1322;
+    --surface-low: #151b2b;
+    --surface-container: #191f2f;
+    --surface-high: #242a3a;
+    --surface-highest: #2f3445;
+    
+    --primary: #8ed5ff;
+    --primary-cyan: #38bdf8;
+    --primary-glow: rgba(56, 189, 248, 0.35);
+    
+    --secondary-indigo: #818cf8;
+    --secondary-purple: #bdc2ff;
+    --tertiary-amber: #fde047;
+    --alert-amber: #f59e0b;
+    --emerald-green: #34d399;
+    
+    --text-white: #ffffff;
+    --text-on-surface: #dde2f8;
+    --text-variant: #94a3b8;
+    --text-muted: #64748b;
+    
+    --border-glass: rgba(255, 255, 255, 0.12);
+    --border-glass-light: rgba(255, 255, 255, 0.22);
+    --border-focus: rgba(56, 189, 248, 0.55);
+    
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-pill: 9999px;
+    
+    --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-dark);
+    color: var(--text-on-surface);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Atmospheric Aurora Mesh & Radiance Spheres
+   ========================================================================== */
+.aurora-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    transition: background 1.5s ease;
+}
+
+.aurora-sphere {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.35;
+    animation: aurora-float 18s infinite alternate ease-in-out;
+}
+
+.sphere-1 {
+    top: -10%;
+    left: -15%;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, transparent 70%);
+}
+
+.sphere-2 {
+    top: 30%;
+    right: -20%;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.35) 0%, transparent 70%);
+    animation-delay: -5s;
+}
+
+.sphere-3 {
+    bottom: -15%;
+    left: 20%;
+    width: 550px;
+    height: 550px;
+    background: radial-gradient(circle, rgba(2, 132, 199, 0.3) 0%, transparent 70%);
+    animation-delay: -10s;
+}
+
+@keyframes aurora-float {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, 60px) scale(1.12); }
+    100% { transform: translate(-30px, 30px) scale(0.95); }
+}
+
+/* ==========================================================================
+   Glassmorphism & Specular 3D Slabs
+   ========================================================================== */
+.glass-panel {
+    background: rgba(21, 27, 43, 0.65);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-lg);
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.16),
+        0 12px 32px -4px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-panel:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+        0 16px 40px -6px rgba(56, 189, 248, 0.16),
+        0 12px 32px -4px rgba(0, 0, 0, 0.5);
+}
+
+.glass-pill {
+    background: rgba(25, 31, 47, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   App Layout Shell
+   ========================================================================== */
+.app-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 16px 16px 100px 16px;
+    min-height: 100vh;
+}
+
+/* Header & Top Bar */
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(13, 19, 34, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-glass);
+    margin-bottom: 20px;
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.live-dot {
+    position: relative;
+    width: 10px;
+    height: 10px;
+}
+
+.live-dot span {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--primary-cyan);
+}
+
+.live-dot .pulse {
+    animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+    opacity: 0.75;
+}
+
+@keyframes ping {
+    75%, 100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+.brand-text {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-white);
+}
+
+.location-badge {
+    font-size: 13px;
+    color: var(--primary-cyan);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-glass);
+    color: var(--text-on-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--primary-cyan);
+    border-color: var(--primary-cyan);
+    transform: scale(1.05);
+}
+
+.unit-toggle {
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-glass);
+    color: var(--primary-cyan);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unit-toggle:hover {
+    background: rgba(56, 189, 248, 0.18);
+}
+
+/* ==========================================================================
+   Search Input Bar
+   ========================================================================== */
+.search-bar-wrap {
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: var(--radius-pill);
+    background: rgba(8, 14, 29, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-glass);
+    transition: all 0.25s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.search-bar:focus-within {
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 16px -2px var(--primary-glow), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.search-bar svg {
+    color: var(--text-variant);
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-white);
+}
+
+.search-bar input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Weather Advisory Alert Banner */
+.alert-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 0 20px -4px rgba(245, 158, 11, 0.2);
+    animation: alert-pulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes alert-pulse {
+    0% { border-color: rgba(245, 158, 11, 0.3); }
+    100% { border-color: rgba(245, 158, 11, 0.55); box-shadow: 0 0 24px -2px rgba(245, 158, 11, 0.35); }
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alert-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tertiary-amber);
+}
+
+.alert-desc {
+    font-size: 12px;
+    color: rgba(253, 224, 71, 0.8);
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   Dashboard Bento Grid Layout (Responsive Multi-Screen)
+   ========================================================================== */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(12, 1fr);
+    }
+    
+    .hero-weather-col {
+        grid-column: span 12;
+    }
+    
+    .forecast-hourly-col {
+        grid-column: span 12;
+    }
+    
+    .forecast-weekly-col {
+        grid-column: span 6;
+    }
+    
+    .telemetry-col {
+        grid-column: span 6;
+    }
+    
+    .ephemeris-col {
+        grid-column: span 12;
+    }
+    
+    .radar-col {
+        grid-column: span 12;
+    }
+}
+
+@media (min-width: 1080px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(12, 1fr);
+    }
+    
+    .hero-weather-col {
+        grid-column: span 7;
+    }
+    
+    .telemetry-col {
+        grid-column: span 5;
+    }
+    
+    .forecast-hourly-col {
+        grid-column: span 12;
+    }
+    
+    .forecast-weekly-col {
+        grid-column: span 6;
+    }
+    
+    .radar-col {
+        grid-column: span 6;
+    }
+    
+    .ephemeris-col {
+        grid-column: span 12;
+    }
+}
+
+/* ==========================================================================
+   3D Hero Weather Stage Card
+   ========================================================================== */
+.hero-stage-card {
+    padding: 24px;
+    min-height: 440px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+
+.canvas-3d-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    cursor: grab;
+}
+
+.canvas-3d-wrapper:active {
+    cursor: grabbing;
+}
+
+.hero-overlay-content {
+    position: relative;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.hero-top-meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.city-headline {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-white);
+}
+
+.date-subtitle {
+    font-size: 13px;
+    color: var(--text-variant);
+    margin-top: 3px;
+}
+
+.interactive-pill-badge {
+    pointer-events: auto;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: var(--primary-cyan);
+    box-shadow: 0 0 16px -2px var(--primary-glow);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.interactive-pill-badge:hover {
+    background: rgba(56, 189, 248, 0.25);
+    transform: translateY(-1px);
+}
+
+.hero-bottom-metrics {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 140px;
+}
+
+.temperature-display {
+    font-size: 88px;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--text-white);
+    display: flex;
+    align-items: flex-start;
+}
+
+.temp-unit-symbol {
+    font-size: 42px;
+    font-weight: 300;
+    color: var(--primary-cyan);
+    margin-top: 6px;
+}
+
+.weather-condition-pill {
+    margin-top: 8px;
+    padding: 6px 20px;
+    border-radius: var(--radius-pill);
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    backdrop-filter: blur(12px);
+    color: var(--primary-cyan);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 20px -2px rgba(56, 189, 248, 0.25);
+}
+
+.high-low-capsule {
+    margin-top: 10px;
+    padding: 5px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(25, 31, 47, 0.65);
+    border: 1px solid var(--border-glass);
+    font-size: 13px;
+    color: var(--text-variant);
+    display: inline-flex;
+    gap: 8px;
+}
+
+.high-low-capsule span.dot {
+    color: var(--text-muted);
+}
+
+/* 3D Scene Controls Toolbar */
+.scene-controls-toolbar {
+    pointer-events: auto;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+}
+
+.scene-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    background: rgba(13, 19, 34, 0.8);
+    border: 1px solid var(--border-glass);
+    color: var(--text-variant);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.scene-btn:hover, .scene-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--primary-cyan);
+    color: var(--primary-cyan);
+}
+
+/* ==========================================================================
+   Hourly Forecast Horizon Carousel
+   ========================================================================== */
+.hourly-card {
+    padding: 20px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-badge {
+    font-size: 12px;
+    color: var(--primary-cyan);
+    font-weight: 600;
+}
+
+.hourly-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+}
+
+.hourly-track::-webkit-scrollbar {
+    display: none;
+}
+
+.hourly-item {
+    flex: 0 0 76px;
+    height: 124px;
+    padding: 12px 8px;
+    border-radius: var(--radius-md);
+    background: rgba(25, 31, 47, 0.6);
+    border: 1px solid var(--border-glass);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.hourly-item:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 8px 20px -4px rgba(56, 189, 248, 0.25);
+}
+
+.hourly-item.active {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 20px -4px var(--primary-glow);
+}
+
+.hourly-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-variant);
+}
+
+.hourly-item.active .hourly-time {
+    color: var(--primary-cyan);
+    font-weight: 700;
+}
+
+.hourly-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.hourly-temp {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-white);
+}
+
+.hourly-rain {
+    font-size: 10px;
+    color: var(--primary-cyan);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   7-Day Forecast Bento Panel
+   ========================================================================== */
+.weekly-forecast-card {
+    padding: 22px;
+}
+
+.daily-rows-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.daily-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.daily-day {
+    width: 60px;
+    font-weight: 500;
+    color: var(--text-on-surface);
+}
+
+.daily-row.today .daily-day {
+    color: var(--text-white);
+    font-weight: 700;
+}
+
+.daily-icon-wrap {
+    width: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.temp-range-bar-wrap {
+    flex: 1;
+    margin: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.temp-min {
+    font-size: 12px;
+    color: var(--text-variant);
+    width: 28px;
+    text-align: right;
+}
+
+.temp-max {
+    font-size: 12px;
+    color: var(--text-white);
+    width: 28px;
+    font-weight: 600;
+}
+
+.temp-bar-track {
+    flex: 1;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-highest);
+    position: relative;
+    overflow: hidden;
+}
+
+.temp-bar-fill {
+    position: absolute;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #fbbf24 100%);
+}
+
+.current-temp-pin {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 8px #ffffff;
+    border: 2px solid var(--surface);
+}
+
+/* ==========================================================================
+   Precision Telemetry 2-Column Bento Grid
+   ========================================================================== */
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.telemetry-card {
+    padding: 18px;
+    min-height: 148px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.telemetry-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.telemetry-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-variant);
+}
+
+.telemetry-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.telemetry-val {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-white);
+    letter-spacing: -0.01em;
+}
+
+.telemetry-val small {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-variant);
+    margin-left: 2px;
+}
+
+.telemetry-desc {
+    font-size: 12px;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-highest);
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    transition: width 0.6s ease;
+}
+
+/* Compass Needle Icon Animation */
+.compass-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--primary-cyan);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.compass-arrow {
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Solar Ephemeris Card (Sunrise / Sunset Trajectory Arc)
+   ========================================================================== */
+.ephemeris-card {
+    padding: 24px;
+}
+
+.ephemeris-arc-wrap {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    margin: 16px 0 8px 0;
+}
+
+.ephemeris-arc-wrap svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.ephemeris-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-glass);
+}
+
+.sun-stat-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.sun-stat-label {
+    font-size: 11px;
+    color: var(--text-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sun-stat-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-white);
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   Doppler Precipitation Radar Preview Card
+   ========================================================================== */
+.radar-card {
+    padding: 22px;
+}
+
+.radar-viewport {
+    position: relative;
+    height: 220px;
+    border-radius: var(--radius-md);
+    background: #060b17;
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radar-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+    background-image: radial-gradient(var(--primary-cyan) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.radar-sweep-beam {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    animation: radar-sweep 6s linear infinite;
+}
+
+@keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.radar-rain-bloom {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(20px);
+    mix-blend-mode: screen;
+}
+
+.bloom-green {
+    width: 140px;
+    height: 140px;
+    top: 25%;
+    left: 20%;
+    background: rgba(52, 211, 153, 0.4);
+    animation: pulse-bloom 3s infinite alternate;
+}
+
+.bloom-cyan {
+    width: 90px;
+    height: 90px;
+    top: 30%;
+    left: 32%;
+    background: rgba(56, 189, 248, 0.55);
+}
+
+.bloom-yellow {
+    width: 50px;
+    height: 50px;
+    top: 35%;
+    left: 40%;
+    background: rgba(251, 191, 36, 0.6);
+}
+
+@keyframes pulse-bloom {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1.08); opacity: 1; }
+}
+
+.radar-pin {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pin-ring {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.25);
+    border: 2px solid var(--primary-cyan);
+    box-shadow: 0 0 16px var(--primary-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pin-core {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.pin-label {
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(8, 14, 29, 0.85);
+    border: 1px solid var(--border-glass);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-white);
+}
+
+.radar-controls-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(25, 31, 47, 0.6);
+    border: 1px solid var(--border-glass);
+}
+
+.radar-timeline-track {
+    flex: 1;
+    margin: 0 16px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-highest);
+    position: relative;
+    cursor: pointer;
+}
+
+.radar-timeline-progress {
+    width: 65%;
+    height: 100%;
+    background: var(--primary-cyan);
+    border-radius: var(--radius-pill);
+}
+
+.radar-thumb {
+    position: absolute;
+    top: 50%;
+    left: 65%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 8px var(--primary-cyan);
+}
+
+/* ==========================================================================
+   Floating Bottom Navigation Pill Dock
+   ========================================================================== */
+.bottom-dock-wrap {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: 90%;
+    max-width: 440px;
+    pointer-events: none;
+}
+
+.bottom-dock {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    background: rgba(13, 19, 34, 0.85);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid var(--border-glass);
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 24px -2px rgba(56, 189, 248, 0.15);
+}
+
+.dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-variant);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    transition: all 0.2s ease;
+}
+
+.dock-btn svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+}
+
+.dock-btn:hover {
+    color: var(--primary-cyan);
+}
+
+.dock-btn.active {
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--primary-cyan);
+    font-weight: 700;
+    box-shadow: 0 0 16px -2px rgba(56, 189, 248, 0.3);
+}
+
+.dock-btn.active svg {
+    transform: scale(1.12);
+}
+
+/* ==========================================================================
+   Modals & Drawers (Locations Search & System Status)
+   ========================================================================== */
+.drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 7, 15, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.side-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    background: rgba(13, 19, 34, 0.95);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-left: 1px solid var(--border-glass);
+    z-index: 210;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.side-drawer.open {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: 20px;
+}
+
+.drawer-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-white);
+}
+
+.saved-city-card {
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    background: rgba(25, 31, 47, 0.65);
+    border: 1px solid var(--border-glass);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.saved-city-card:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.4);
+    transform: scale(1.01);
+}
+
+.saved-city-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-white);
+}
+
+.saved-city-country {
+    font-size: 12px;
+    color: var(--text-variant);
+    margin-top: 2px;
+}
+
+.saved-city-temp {
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--text-white);
+}
+
+/* System Diagnostics Info Rows */
+.system-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+}
+
+.system-info-label {
+    color: var(--text-variant);
+}
+
+.system-info-val {
+    color: var(--text-white);
+    font-weight: 600;
+}
