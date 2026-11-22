@@ -171,21 +171,25 @@
             <!-- 5. Precision Weather Telemetry Grid -->
             <div class="telemetry-section" id="telemetrySection">
                 <div class="telemetry-grid">
-                    <!-- AQI Card -->
-                    <div class="glass-panel telemetry-card">
+                    <!-- AQI Card (Official CPCB NAQI Standard) -->
+                    <div class="glass-panel telemetry-card" id="aqiCard">
                         <div class="telemetry-top">
                             <div class="telemetry-label">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M8 19v2M12 17v4M16 19v2"/></svg>
-                                <span>AQI</span>
+                                <span>AQI · CPCB NAQI</span>
                             </div>
-                            <div class="telemetry-indicator-dot" id="aqiDot" style="background-color: #34d399;"></div>
+                            <div class="telemetry-indicator-dot" id="aqiDot" style="background-color: #eab308;"></div>
                         </div>
                         <div>
-                            <div class="telemetry-val" id="tvAqiNumber">42</div>
-                            <div class="telemetry-desc" id="tvAqiDescription" style="color: #34d399;">Good Quality</div>
+                            <div class="telemetry-val" id="tvAqiNumber">103</div>
+                            <div class="telemetry-desc" id="tvAqiDescription" style="color: #eab308;">Moderate</div>
                         </div>
                         <div class="progress-track">
-                            <div class="progress-fill" id="aqiFill" style="width: 42%; background-color: #34d399;"></div>
+                            <div class="progress-fill" id="aqiFill" style="width: 21%; background-color: #eab308;"></div>
+                        </div>
+                        <div class="aqi-subpollutants">
+                            <span class="aqi-pill">PM2.5: <strong id="tvPm25Val">61</strong> µg</span>
+                            <span class="aqi-pill">PM10: <strong id="tvPm10Val">67</strong> µg</span>
                         </div>
                     </div>
 

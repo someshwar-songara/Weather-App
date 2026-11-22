@@ -52,13 +52,17 @@
     <color name="weather_snow">#7DD3FC</color>
     <color name="weather_default">#818CF8</color>
 
-    <!-- Air Quality Colors -->
+    <!-- Air Quality Colors (Official CPCB India NAQI Standard) -->
     <color name="aqi_good">#10B981</color>
-    <color name="aqi_moderate">#FBBF24</color>
+    <color name="aqi_satisfactory">#84CC16</color>
+    <color name="aqi_moderate">#EAB308</color>
+    <color name="aqi_poor">#F97316</color>
+    <color name="aqi_very_poor">#EF4444</color>
+    <color name="aqi_severe">#7F1D1D</color>
     <color name="aqi_unhealthy_sensitive">#F97316</color>
     <color name="aqi_unhealthy">#EF4444</color>
-    <color name="aqi_very_unhealthy">#A855F7</color>
-    <color name="aqi_hazardous">#881337</color>
+    <color name="aqi_very_unhealthy">#7F1D1D</color>
+    <color name="aqi_hazardous">#7F1D1D</color>
 
     <!-- Background gradient base -->
     <color name="gradient_top">#0B1120</color>

@@ -470,24 +470,56 @@
             }
 
             // Telemetry Cards
-            // 1. AQI
-            var aqiVal = data.aqi || 1;
+            // 1. AQI (Official India CPCB NAQI 0 - 500 Scale)
+            var aqiVal = data.aqi !== undefined ? data.aqi : 45;
+            var aqiCategory = data.aqiCategory;
+            var aqiColor = '#10b981';
+
+            if (!aqiCategory) {
+                if (aqiVal <= 50) { aqiCategory = 'Good'; aqiColor = '#10b981'; }
+                else if (aqiVal <= 100) { aqiCategory = 'Satisfactory'; aqiColor = '#84cc16'; }
+                else if (aqiVal <= 200) { aqiCategory = 'Moderate'; aqiColor = '#eab308'; }
+                else if (aqiVal <= 300) { aqiCategory = 'Poor'; aqiColor = '#f97316'; }
+                else if (aqiVal <= 400) { aqiCategory = 'Very Poor'; aqiColor = '#ef4444'; }
+                else { aqiCategory = 'Severe'; aqiColor = '#7f1d1d'; }
+            } else {
+                var cLower = aqiCategory.toLowerCase();
+                if (cLower.indexOf('good') !== -1) aqiColor = '#10b981';
+                else if (cLower.indexOf('satisfactory') !== -1) aqiColor = '#84cc16';
+                else if (cLower.indexOf('moderate') !== -1) aqiColor = '#eab308';
+                else if (cLower.indexOf('very poor') !== -1) aqiColor = '#ef4444';
+                else if (cLower.indexOf('poor') !== -1) aqiColor = '#f97316';
+                else if (cLower.indexOf('severe') !== -1 || cLower.indexOf('hazard') !== -1) aqiColor = '#7f1d1d';
+                else aqiColor = '#eab308';
+            }
+
             var aqiNumberEl = document.getElementById('tvAqiNumber');
             var aqiDescEl = document.getElementById('tvAqiDescription');
             var aqiDot = document.getElementById('aqiDot');
             var aqiFill = document.getElementById('aqiFill');
-            var aqiColor = '#34d399';
-            var aqiText = 'Good';
-
-            if (aqiVal <= 1 || aqiVal <= 50) { aqiText = 'Good'; aqiColor = '#34d399'; }
-            else if (aqiVal <= 2 || aqiVal <= 100) { aqiText = 'Moderate'; aqiColor = '#facc15'; }
-            else if (aqiVal <= 3 || aqiVal <= 150) { aqiText = 'Unhealthy (Sens.)'; aqiColor = '#fb923c'; }
-            else { aqiText = 'Unhealthy'; aqiColor = '#f87171'; }
+            var pm25El = document.getElementById('tvPm25Val');
+            var pm10El = document.getElementById('tvPm10Val');
 
             if (aqiNumberEl) aqiNumberEl.textContent = aqiVal;
-            if (aqiDescEl) { aqiDescEl.textContent = aqiText + ' Quality'; aqiDescEl.style.color = aqiColor; }
+            if (aqiDescEl) {
+                aqiDescEl.textContent = aqiCategory;
+                aqiDescEl.style.color = aqiColor;
+            }
             if (aqiDot) aqiDot.style.backgroundColor = aqiColor;
-            if (aqiFill) { aqiFill.style.width = Math.min(100, (aqiVal * 20)) + '%'; aqiFill.style.backgroundColor = aqiColor; }
+            if (aqiFill) {
+                var pct = Math.min(100, Math.max(6, Math.round((aqiVal / 500) * 100)));
+                aqiFill.style.width = pct + '%';
+                aqiFill.style.backgroundColor = aqiColor;
+            }
+
+            if (pm25El) {
+                var pm25Val = data.pm25 !== undefined && data.pm25 > 0 ? Math.round(data.pm25) : Math.round(aqiVal * 0.6);
+                pm25El.textContent = pm25Val;
+            }
+            if (pm10El) {
+                var pm10Val = data.pm10 !== undefined && data.pm10 > 0 ? Math.round(data.pm10) : Math.round(aqiVal * 0.7);
+                pm10El.textContent = pm10Val;
+            }
 
             // 2. Wind
             var windKmh = ((data.windSpeed || 3.8) * 3.6).toFixed(1);
@@ -879,6 +911,67 @@
         },
 
         /**
+         * Calculates CPCB National Air Quality Index (NAQI) for India (0-500 standard scale)
+         */
+        calculateCpcbAqi: function (comp) {
+            if (!comp) return { aqi: 45, category: 'Good', color: '#10b981', dominant: 'PM2.5', pm25: 15, pm10: 25 };
+
+            var pm25 = comp.pm2_5 !== undefined ? comp.pm2_5 : (comp.pm25 || 0);
+            var pm10 = comp.pm10 || 0;
+            var no2 = comp.no2 || 0;
+            var so2 = comp.so2 || 0;
+            var co = (comp.co || 0) > 50 ? (comp.co / 1000.0) : (comp.co || 0); // mg/m³
+            var o3 = comp.o3 || 0;
+
+            function calcSub(val, c, iScale) {
+                if (val <= 0) return 0;
+                for (var i = 0; i < c.length - 1; i++) {
+                    if (val >= c[i] && val <= c[i + 1]) {
+                        var frac = (val - c[i]) / (c[i + 1] - c[i]);
+                        return Math.round(iScale[i] + frac * (iScale[i + 1] - iScale[i]));
+                    }
+                }
+                if (val > c[c.length - 1]) return 500;
+                return 0;
+            }
+
+            var subPm25 = calcSub(pm25, [0, 30, 60, 90, 120, 250, 380], [0, 50, 100, 200, 300, 400, 500]);
+            var subPm10 = calcSub(pm10, [0, 50, 100, 250, 350, 430, 500], [0, 50, 100, 200, 300, 400, 500]);
+            var subNo2  = calcSub(no2,  [0, 40, 80, 180, 280, 400, 600],  [0, 50, 100, 200, 300, 400, 500]);
+            var subSo2  = calcSub(so2,  [0, 40, 80, 380, 800, 1600, 2000], [0, 50, 100, 200, 300, 400, 500]);
+            var subCo   = calcSub(co,   [0, 1.0, 2.0, 10.0, 17.0, 34.0, 50.0], [0, 50, 100, 200, 300, 400, 500]);
+            var subO3   = calcSub(o3,   [0, 50, 100, 168, 208, 748, 1000], [0, 50, 100, 200, 300, 400, 500]);
+
+            var maxAqi = subPm25;
+            var dominant = 'PM2.5';
+            if (subPm10 > maxAqi) { maxAqi = subPm10; dominant = 'PM10'; }
+            if (subNo2 > maxAqi)  { maxAqi = subNo2; dominant = 'NO2'; }
+            if (subSo2 > maxAqi)  { maxAqi = subSo2; dominant = 'SO2'; }
+            if (subCo > maxAqi)   { maxAqi = subCo; dominant = 'CO'; }
+            if (subO3 > maxAqi)   { maxAqi = subO3; dominant = 'O3'; }
+
+            if (maxAqi < 1) { maxAqi = 25; }
+
+            var cat = 'Good';
+            var col = '#10b981';
+            if (maxAqi <= 50) { cat = 'Good'; col = '#10b981'; }
+            else if (maxAqi <= 100) { cat = 'Satisfactory'; col = '#84cc16'; }
+            else if (maxAqi <= 200) { cat = 'Moderate'; col = '#eab308'; }
+            else if (maxAqi <= 300) { cat = 'Poor'; col = '#f97316'; }
+            else if (maxAqi <= 400) { cat = 'Very Poor'; col = '#ef4444'; }
+            else { cat = 'Severe'; col = '#7f1d1d'; }
+
+            return {
+                aqi: maxAqi,
+                category: cat,
+                color: col,
+                dominant: dominant,
+                pm25: pm25,
+                pm10: pm10
+            };
+        },
+
+        /**
          * Live OpenWeatherMap API Direct Query (Standalone Web Mode)
          */
         fetchWeatherByCity: function (city) {
@@ -892,52 +985,68 @@
                     return res.json();
                 })
                 .then(function (cur) {
-                    fetch(forecastUrl)
-                        .then(function (r2) { return r2.json(); })
-                        .then(function (fore) {
-                            var fItems = [];
-                            if (fore && fore.list) {
-                                for (var f = 0; f < Math.min(8, fore.list.length); f++) {
-                                    var item = fore.list[f];
-                                    fItems.push({
-                                        time: item.dt_txt,
-                                        temperature: item.main.temp,
-                                        description: item.weather[0].description
-                                    });
-                                }
-                            }
+                    var lat = cur.coord ? cur.coord.lat : 0;
+                    var lon = cur.coord ? cur.coord.lon : 0;
+                    var aqiUrl = 'https://api.openweathermap.org/data/2.5/air_pollution?lat=' + lat + '&lon=' + lon + '&appid=' + self.apiKey;
 
-                            var sunriseTime = '6:30 AM';
-                            var sunsetTime = '7:30 PM';
-                            if (cur.sys) {
-                                sunriseTime = new Date(cur.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                sunsetTime = new Date(cur.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            }
+                    Promise.all([
+                        fetch(forecastUrl).then(function (r) { return r.json(); }).catch(function () { return null; }),
+                        fetch(aqiUrl).then(function (r) { return r.json(); }).catch(function () { return null; })
+                    ]).then(function (results) {
+                        var fore = results[0];
+                        var aqiRes = results[1];
 
-                            var d = {
-                                city: cur.name + ', ' + (cur.sys ? cur.sys.country : ''),
-                                temperature: cur.main.temp,
-                                feelsLike: cur.main.feels_like,
-                                tempMin: cur.main.temp_min,
-                                tempMax: cur.main.temp_max,
-                                description: cur.weather[0].description,
-                                humidity: cur.main.humidity,
-                                windSpeed: cur.wind.speed,
-                                windDeg: cur.wind.deg || 0,
-                                visibility: cur.visibility ? (cur.visibility / 1000) : 10.0,
-                                aqi: 42,
-                                pressure: cur.main.pressure || 1013,
-                                uvIndex: 3.5,
-                                sunrise: sunriseTime,
-                                sunset: sunsetTime,
-                                isDay: true,
-                                forecast: fItems
-                            };
-                            self.renderWeather(d);
-                        })
-                        .catch(function () {
-                            self.fallbackLocalCity(city);
-                        });
+                        var fItems = [];
+                        if (fore && fore.list) {
+                            for (var f = 0; f < Math.min(8, fore.list.length); f++) {
+                                var item = fore.list[f];
+                                fItems.push({
+                                    time: item.dt_txt,
+                                    temperature: item.main.temp,
+                                    description: item.weather[0].description
+                                });
+                            }
+                        }
+
+                        var cpcb = { aqi: 103, category: 'Moderate', color: '#eab308', dominant: 'PM2.5', pm25: 61, pm10: 67 };
+                        if (aqiRes && aqiRes.list && aqiRes.list.length > 0 && aqiRes.list[0].components) {
+                            cpcb = self.calculateCpcbAqi(aqiRes.list[0].components);
+                        }
+
+                        var sunriseTime = '6:30 AM';
+                        var sunsetTime = '7:30 PM';
+                        if (cur.sys) {
+                            sunriseTime = new Date(cur.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            sunsetTime = new Date(cur.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+
+                        var d = {
+                            city: cur.name + ', ' + (cur.sys ? cur.sys.country : ''),
+                            temperature: cur.main.temp,
+                            feelsLike: cur.main.feels_like,
+                            tempMin: cur.main.temp_min,
+                            tempMax: cur.main.temp_max,
+                            description: cur.weather[0].description,
+                            humidity: cur.main.humidity,
+                            windSpeed: cur.wind.speed,
+                            windDeg: cur.wind.deg || 0,
+                            visibility: cur.visibility ? (cur.visibility / 1000) : 10.0,
+                            aqi: cpcb.aqi,
+                            aqiCategory: cpcb.category,
+                            aqiProminent: cpcb.dominant,
+                            pm25: cpcb.pm25,
+                            pm10: cpcb.pm10,
+                            pressure: cur.main.pressure || 1013,
+                            uvIndex: 3.5,
+                            sunrise: sunriseTime,
+                            sunset: sunsetTime,
+                            isDay: true,
+                            forecast: fItems
+                        };
+                        self.renderWeather(d);
+                    }).catch(function () {
+                        self.fallbackLocalCity(city);
+                    });
                 })
                 .catch(function (err) {
                     console.log('OpenWeather API fallback to local data:', err);
@@ -962,12 +1071,13 @@
         fallbackLocalCity: function (city) {
             var self = this;
             var mockCities = {
-                'tokyo': { city: 'Tokyo, JP', temperature: 18, description: 'Rain', humidity: 82, windSpeed: 5.5, aqi: 28, uvIndex: 2.0 },
-                'london': { city: 'London, UK', temperature: 14, description: 'Overcast Clouds', humidity: 76, windSpeed: 6.2, aqi: 35, uvIndex: 1.5 },
-                'new york': { city: 'New York, US', temperature: 27, description: 'Clear Sky', humidity: 52, windSpeed: 3.4, aqi: 48, uvIndex: 7.0 },
-                'reykjavik': { city: 'Reykjavik, IS', temperature: 1, description: 'Light Snow', humidity: 88, windSpeed: 8.0, aqi: 12, uvIndex: 0.5 },
-                'paris': { city: 'Paris, FR', temperature: 19, description: 'Scattered Clouds', humidity: 60, windSpeed: 4.1, aqi: 38, uvIndex: 4.0 },
-                'ujjain': { city: 'Ujjain, IN', temperature: 25, description: 'Clear Sky', humidity: 45, windSpeed: 3.2, aqi: 55, uvIndex: 6.0 }
+                'tokyo': { city: 'Tokyo, JP', temperature: 18, description: 'Rain', humidity: 82, windSpeed: 5.5, aqi: 28, aqiCategory: 'Good', pm25: 14, pm10: 22, uvIndex: 2.0 },
+                'london': { city: 'London, UK', temperature: 14, description: 'Overcast Clouds', humidity: 76, windSpeed: 6.2, aqi: 35, aqiCategory: 'Good', pm25: 18, pm10: 28, uvIndex: 1.5 },
+                'new york': { city: 'New York, US', temperature: 27, description: 'Clear Sky', humidity: 52, windSpeed: 3.4, aqi: 48, aqiCategory: 'Good', pm25: 24, pm10: 36, uvIndex: 7.0 },
+                'reykjavik': { city: 'Reykjavik, IS', temperature: 1, description: 'Light Snow', humidity: 88, windSpeed: 8.0, aqi: 18, aqiCategory: 'Good', pm25: 6, pm10: 10, uvIndex: 0.5 },
+                'paris': { city: 'Paris, FR', temperature: 19, description: 'Scattered Clouds', humidity: 60, windSpeed: 4.1, aqi: 42, aqiCategory: 'Good', pm25: 22, pm10: 34, uvIndex: 4.0 },
+                'ujjain': { city: 'Ujjain, IN', temperature: 25, description: 'Clear Sky', humidity: 45, windSpeed: 3.2, aqi: 103, aqiCategory: 'Moderate', pm25: 61, pm10: 67, uvIndex: 6.0 },
+                'delhi': { city: 'Delhi, IN', temperature: 24, description: 'Haze', humidity: 55, windSpeed: 2.5, aqi: 241, aqiCategory: 'Poor', pm25: 102, pm10: 123, uvIndex: 4.5 }
             };
 
             var key = city.toLowerCase().trim();

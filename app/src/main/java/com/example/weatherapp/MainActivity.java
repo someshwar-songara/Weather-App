@@ -194,30 +194,38 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
     }
 
     private void updateAqiDisplay(int aqi) {
+        updateAqiDisplay(aqi, null);
+    }
+
+    private void updateAqiDisplay(int aqi, String category) {
         String aqiDescription;
         int aqiColor;
 
-        if (aqi <= 1 || aqi <= 50) {
+        if (aqi <= 50) {
             aqiDescription = "Good";
             aqiColor = ContextCompat.getColor(this, R.color.aqi_good);
-        } else if (aqi <= 2 || aqi <= 100) {
+        } else if (aqi <= 100) {
+            aqiDescription = "Satisfactory";
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_satisfactory);
+        } else if (aqi <= 200) {
             aqiDescription = "Moderate";
             aqiColor = ContextCompat.getColor(this, R.color.aqi_moderate);
-        } else if (aqi <= 3 || aqi <= 150) {
-            aqiDescription = "Unhealthy (Sensitive)";
-            aqiColor = ContextCompat.getColor(this, R.color.aqi_unhealthy_sensitive);
-        } else if (aqi <= 4 || aqi <= 200) {
-            aqiDescription = "Unhealthy";
-            aqiColor = ContextCompat.getColor(this, R.color.aqi_unhealthy);
-        } else if (aqi <= 5 || aqi <= 300) {
-            aqiDescription = "Very Unhealthy";
-            aqiColor = ContextCompat.getColor(this, R.color.aqi_very_unhealthy);
+        } else if (aqi <= 300) {
+            aqiDescription = "Poor";
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_poor);
+        } else if (aqi <= 400) {
+            aqiDescription = "Very Poor";
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_very_poor);
         } else {
-            aqiDescription = "Hazardous";
-            aqiColor = ContextCompat.getColor(this, R.color.aqi_hazardous);
+            aqiDescription = "Severe";
+            aqiColor = ContextCompat.getColor(this, R.color.aqi_severe);
         }
 
-        tvAqi.setText(String.format("%d · %s", aqi, aqiDescription));
+        if (category != null && !category.isEmpty()) {
+            aqiDescription = category;
+        }
+
+        tvAqi.setText(String.format(java.util.Locale.getDefault(), "%d · %s", aqi, aqiDescription));
         tvAqi.setTextColor(aqiColor);
         if (ivAqiIcon != null) {
             ivAqiIcon.setColorFilter(aqiColor);
@@ -240,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
 
             tvWindSpeed.setText(String.format("%.1f km/h", weatherData.getWindSpeed() * 3.6));
             tvHumidity.setText(String.format("%d%%", weatherData.getHumidity()));
-            updateAqiDisplay(weatherData.getAqi());
+            updateAqiDisplay(weatherData.getAqi(), weatherData.getAqiCategory());
             tvVisibility.setText(String.format("%.1f km", weatherData.getVisibility()));
 
             if (tvPressure != null) {
@@ -554,6 +562,14 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
             json.put("windDeg", currentWeatherData.getWindDeg());
             json.put("visibility", currentWeatherData.getVisibility());
             json.put("aqi", currentWeatherData.getAqi());
+            json.put("aqiCategory", currentWeatherData.getAqiCategory());
+            json.put("aqiProminent", currentWeatherData.getAqiProminentPollutant());
+            json.put("pm25", currentWeatherData.getPm25());
+            json.put("pm10", currentWeatherData.getPm10());
+            json.put("no2", currentWeatherData.getNo2());
+            json.put("so2", currentWeatherData.getSo2());
+            json.put("co", currentWeatherData.getCo());
+            json.put("o3", currentWeatherData.getO3());
             json.put("pressure", currentWeatherData.getPressure());
             json.put("sunrise", currentWeatherData.getSunrise());
             json.put("sunset", currentWeatherData.getSunset());

@@ -933,6 +933,32 @@ body {
     transition: width 0.6s ease;
 }
 
+.aqi-subpollutants {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.aqi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--text-variant);
+    font-weight: 500;
+}
+
+.aqi-pill strong {
+    color: var(--text-white);
+    font-weight: 700;
+}
+
 .compass-badge {
     display: inline-flex;
     align-items: center;
