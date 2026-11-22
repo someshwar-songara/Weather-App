@@ -57,6 +57,7 @@
             this.setupAudio();
             this.renderSavedCities();
             this.initDopplerRadar();
+            this.setupCitySuggestions();
 
             // Initial Sample Data (Google Stitch benchmark)
             this.loadInitialSampleData();
@@ -115,19 +116,7 @@
                 });
             }
 
-            // Search Bar
-            var searchInput = document.getElementById('citySearchInput');
-            if (searchInput) {
-                searchInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        var query = searchInput.value.trim();
-                        if (query) {
-                            self.performSearch(query);
-                            searchInput.blur();
-                        }
-                    }
-                });
-            }
+            // Search Bar is initialized with live autocomplete in setupCitySuggestions()
 
             // Preset 3D Switcher (Auto, Sun, Rain, Storm, Snow, Cloud, Sunset, Night)
             var presetBtns = document.querySelectorAll('.scene-btn[data-condition]');
@@ -792,6 +781,378 @@
                 ].join('');
                 container.appendChild(row);
             }
+        },
+
+        setupCitySuggestions: function () {
+            var self = this;
+            var input = document.getElementById('citySearchInput');
+            var dropdown = document.getElementById('searchSuggestionsDropdown');
+            var clearBtn = document.getElementById('searchClearBtn');
+            var spinner = document.getElementById('searchSpinner');
+            var wrap = document.getElementById('searchBarWrap');
+            if (!input || !dropdown) return;
+
+            var debounceTimer = null;
+            var selectedIndex = -1;
+            var currentResults = [];
+
+            var popularCities = [
+                { name: 'Ujjain', admin1: 'Madhya Pradesh', country: 'India', countryCode: 'IN', lat: 23.1824, lon: 75.7764 },
+                { name: 'New Delhi', admin1: 'Delhi', country: 'India', countryCode: 'IN', lat: 28.6139, lon: 77.2090 },
+                { name: 'Mumbai', admin1: 'Maharashtra', country: 'India', countryCode: 'IN', lat: 19.0760, lon: 72.8777 },
+                { name: 'Bengaluru', admin1: 'Karnataka', country: 'India', countryCode: 'IN', lat: 12.9716, lon: 77.5946 },
+                { name: 'Indore', admin1: 'Madhya Pradesh', country: 'India', countryCode: 'IN', lat: 22.7196, lon: 75.8577 },
+                { name: 'London', admin1: 'England', country: 'United Kingdom', countryCode: 'GB', lat: 51.5074, lon: -0.1278 },
+                { name: 'New York', admin1: 'New York', country: 'United States', countryCode: 'US', lat: 40.7128, lon: -74.0060 },
+                { name: 'Tokyo', admin1: 'Tokyo', country: 'Japan', countryCode: 'JP', lat: 35.6762, lon: 139.6503 },
+                { name: 'Dubai', admin1: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE', lat: 25.2048, lon: 55.2708 },
+                { name: 'Paris', admin1: 'Île-de-France', country: 'France', countryCode: 'FR', lat: 48.8566, lon: 2.3522 },
+                { name: 'Singapore', admin1: 'Central Region', country: 'Singapore', countryCode: 'SG', lat: 1.3521, lon: 103.8198 },
+                { name: 'Sydney', admin1: 'New South Wales', country: 'Australia', countryCode: 'AU', lat: -33.8688, lon: 151.2093 }
+            ];
+
+            function getCountryFlag(code) {
+                if (!code || typeof code !== 'string' || code.length !== 2) return '📍';
+                try {
+                    var c = code.toUpperCase();
+                    return String.fromCodePoint(c.charCodeAt(0) + 127397, c.charCodeAt(1) + 127397);
+                } catch (e) {
+                    return '📍';
+                }
+            }
+
+            function getRecentSearches() {
+                try {
+                    var data = localStorage.getItem('weather_recent_searches');
+                    return data ? JSON.parse(data) : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function saveRecentSearch(city) {
+                try {
+                    var recents = getRecentSearches();
+                    recents = recents.filter(function (r) {
+                        return r.name.toLowerCase() !== city.name.toLowerCase();
+                    });
+                    recents.unshift(city);
+                    if (recents.length > 5) recents = recents.slice(0, 5);
+                    localStorage.setItem('weather_recent_searches', JSON.stringify(recents));
+                } catch (e) {}
+            }
+
+            function clearRecentSearches() {
+                try {
+                    localStorage.removeItem('weather_recent_searches');
+                } catch (e) {}
+                renderDefault();
+            }
+
+            function selectCity(city) {
+                if (!city) return;
+                self.playChime();
+                input.value = city.name;
+                if (clearBtn) clearBtn.classList.remove('hidden');
+                saveRecentSearch(city);
+                hideDropdown();
+                input.blur();
+
+                if (window.AndroidBridge && window.AndroidBridge.searchCoordinates && city.lat && city.lon) {
+                    window.AndroidBridge.searchCoordinates(city.lat, city.lon, city.name);
+                } else if (window.AndroidBridge && window.AndroidBridge.searchCity) {
+                    window.AndroidBridge.searchCity(city.name);
+                } else {
+                    self.fetchWeatherByCity(city.name);
+                }
+
+                if (self.updateRadarLocation && city.lat && city.lon) {
+                    self.updateRadarLocation(city.lat, city.lon, city.name);
+                }
+            }
+
+            function renderDefault() {
+                var recents = getRecentSearches();
+                var html = '';
+
+                if (recents && recents.length > 0) {
+                    html += '<div class="suggestions-section-header recent">' +
+                        '<span>Recent Searches</span>' +
+                        '<button type="button" class="btn-clear-recent" id="btnClearRecents">Clear</button>' +
+                        '</div>';
+                    html += '<div class="popular-chips-wrap" style="padding-bottom: 6px;">';
+                    recents.forEach(function (c, idx) {
+                        var flag = getCountryFlag(c.countryCode || 'IN');
+                        html += '<div class="popular-chip" data-recent-index="' + idx + '">' +
+                            '<span class="chip-flag">' + flag + '</span>' +
+                            '<span>' + c.name + '</span>' +
+                            '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '<div class="suggestions-section-header">' +
+                    '<span>Popular Cities Worldwide</span>' +
+                    '</div>';
+                html += '<div class="popular-chips-wrap">';
+                popularCities.forEach(function (c, idx) {
+                    var flag = getCountryFlag(c.countryCode);
+                    html += '<div class="popular-chip" data-popular-index="' + idx + '">' +
+                        '<span class="chip-flag">' + flag + '</span>' +
+                        '<span>' + c.name + '</span>' +
+                        '</div>';
+                });
+                html += '</div>';
+
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+                currentResults = [];
+                selectedIndex = -1;
+
+                var btnClear = document.getElementById('btnClearRecents');
+                if (btnClear) {
+                    btnClear.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        clearRecentSearches();
+                    });
+                }
+
+                dropdown.querySelectorAll('.popular-chip[data-recent-index]').forEach(function (chip) {
+                    var handleSelect = function (e) {
+                        e.preventDefault();
+                        var idx = parseInt(chip.getAttribute('data-recent-index'), 10);
+                        if (recents[idx]) selectCity(recents[idx]);
+                    };
+                    chip.addEventListener('pointerdown', handleSelect);
+                    chip.addEventListener('click', handleSelect);
+                });
+
+                dropdown.querySelectorAll('.popular-chip[data-popular-index]').forEach(function (chip) {
+                    var handleSelect = function (e) {
+                        e.preventDefault();
+                        var idx = parseInt(chip.getAttribute('data-popular-index'), 10);
+                        if (popularCities[idx]) selectCity(popularCities[idx]);
+                    };
+                    chip.addEventListener('pointerdown', handleSelect);
+                    chip.addEventListener('click', handleSelect);
+                });
+            }
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                var idx = text.toLowerCase().indexOf(query.toLowerCase());
+                if (idx === -1) return text;
+                return text.substring(0, idx) +
+                    '<mark>' + text.substring(idx, idx + query.length) + '</mark>' +
+                    text.substring(idx + query.length);
+            }
+
+            function renderResults(results, query) {
+                currentResults = results;
+                selectedIndex = -1;
+
+                if (!results || results.length === 0) {
+                    dropdown.innerHTML = '<div class="suggestions-empty">' +
+                        '<div class="suggestions-empty-icon">🔍</div>' +
+                        '<div>No cities found for <strong>"' + query + '"</strong></div>' +
+                        '<div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">Check spelling or try searching nearby major cities</div>' +
+                        '</div>';
+                    dropdown.classList.remove('hidden');
+                    return;
+                }
+
+                var html = '<div class="suggestions-section-header">' +
+                    '<span>Found ' + results.length + ' Suggestions</span>' +
+                    '</div><ul class="suggestions-list">';
+
+                results.forEach(function (r, idx) {
+                    var flag = getCountryFlag(r.countryCode);
+                    var highlighted = highlightMatch(r.name, query);
+                    var sub = [r.admin1, r.country].filter(Boolean).join(', ');
+
+                    html += '<li class="suggestion-item" data-index="' + idx + '">' +
+                        '<span class="suggestion-flag">' + flag + '</span>' +
+                        '<div class="suggestion-info">' +
+                        '<div class="suggestion-title">' + highlighted + '</div>' +
+                        '<div class="suggestion-sub">' + (sub || 'Worldwide') + '</div>' +
+                        '</div>' +
+                        '<span class="suggestion-badge">' + (r.countryCode || 'LOC') + '</span>' +
+                        '<span class="suggestion-action-icon">↗</span>' +
+                        '</li>';
+                });
+
+                html += '</ul>';
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+
+                dropdown.querySelectorAll('.suggestion-item').forEach(function (item) {
+                    var handleSelect = function (e) {
+                        e.preventDefault();
+                        var idx = parseInt(item.getAttribute('data-index'), 10);
+                        if (currentResults[idx]) selectCity(currentResults[idx]);
+                    };
+                    item.addEventListener('pointerdown', handleSelect);
+                    item.addEventListener('click', handleSelect);
+                });
+            }
+
+            function searchCities(query) {
+                if (spinner) spinner.classList.remove('hidden');
+                if (clearBtn) clearBtn.classList.add('hidden');
+
+                fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query) + '&count=8&language=en&format=json')
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (spinner) spinner.classList.add('hidden');
+                        if (clearBtn && input.value.trim().length > 0) clearBtn.classList.remove('hidden');
+
+                        var list = [];
+                        if (data && data.results && data.results.length > 0) {
+                            list = data.results.map(function (item) {
+                                return {
+                                    name: item.name,
+                                    admin1: item.admin1 || '',
+                                    country: item.country || '',
+                                    countryCode: item.country_code || '',
+                                    lat: item.latitude,
+                                    lon: item.longitude,
+                                    population: item.population || 0
+                                };
+                            });
+
+                            var qLower = query.toLowerCase();
+                            list.sort(function (a, b) {
+                                var aStarts = a.name.toLowerCase().indexOf(qLower) === 0 ? 1 : 0;
+                                var bStarts = b.name.toLowerCase().indexOf(qLower) === 0 ? 1 : 0;
+                                if (aStarts !== bStarts) return bStarts - aStarts;
+                                return (b.population || 0) - (a.population || 0);
+                            });
+                        }
+
+                        renderResults(list, query);
+                    })
+                    .catch(function (err) {
+                        console.log('Geocoding error, filtering local list:', err);
+                        if (spinner) spinner.classList.add('hidden');
+                        if (clearBtn && input.value.trim().length > 0) clearBtn.classList.remove('hidden');
+
+                        var qLower = query.toLowerCase();
+                        var filtered = popularCities.filter(function (c) {
+                            return c.name.toLowerCase().indexOf(qLower) !== -1 ||
+                                c.country.toLowerCase().indexOf(qLower) !== -1;
+                        });
+                        renderResults(filtered, query);
+                    });
+            }
+
+            function hideDropdown() {
+                dropdown.classList.add('hidden');
+                dropdown.innerHTML = '';
+                currentResults = [];
+                selectedIndex = -1;
+            }
+
+            function updateActiveSuggestion() {
+                var items = dropdown.querySelectorAll('.suggestion-item');
+                items.forEach(function (item, idx) {
+                    if (idx === selectedIndex) {
+                        item.classList.add('active');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            // Input Events
+            input.addEventListener('focus', function () {
+                var q = input.value.trim();
+                if (q.length < 2) {
+                    renderDefault();
+                } else {
+                    searchCities(q);
+                }
+            });
+
+            input.addEventListener('input', function () {
+                var q = input.value.trim();
+                if (clearBtn) {
+                    if (q.length > 0) clearBtn.classList.remove('hidden');
+                    else clearBtn.classList.add('hidden');
+                }
+
+                if (debounceTimer) clearTimeout(debounceTimer);
+
+                if (q.length === 0) {
+                    renderDefault();
+                    return;
+                }
+
+                if (q.length < 2) {
+                    renderDefault();
+                    return;
+                }
+
+                debounceTimer = setTimeout(function () {
+                    searchCities(q);
+                }, 220);
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (dropdown.classList.contains('hidden') || currentResults.length === 0) {
+                    if (e.key === 'Enter') {
+                        var q = input.value.trim();
+                        if (q) {
+                            self.performSearch(q);
+                            hideDropdown();
+                            input.blur();
+                        }
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex + 1) % currentResults.length;
+                    updateActiveSuggestion();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex - 1 + currentResults.length) % currentResults.length;
+                    updateActiveSuggestion();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && currentResults[selectedIndex]) {
+                        selectCity(currentResults[selectedIndex]);
+                    } else {
+                        var q = input.value.trim();
+                        if (q) {
+                            self.performSearch(q);
+                            hideDropdown();
+                            input.blur();
+                        }
+                    }
+                } else if (e.key === 'Escape') {
+                    hideDropdown();
+                }
+            });
+
+            // Clear Button
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    input.value = '';
+                    clearBtn.classList.add('hidden');
+                    input.focus();
+                    renderDefault();
+                });
+            }
+
+            // Click Outside to Dismiss
+            document.addEventListener('click', function (e) {
+                if (wrap && !wrap.contains(e.target)) {
+                    hideDropdown();
+                }
+            });
         },
 
         renderSavedCities: function () {

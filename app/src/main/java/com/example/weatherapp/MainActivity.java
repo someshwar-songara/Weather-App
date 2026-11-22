@@ -609,6 +609,15 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         }
 
         @JavascriptInterface
+        public void searchCoordinates(double lat, double lon, String cityName) {
+            runOnUiThread(() -> {
+                if (etCitySearch != null && cityName != null) etCitySearch.setText(cityName);
+                showProgressDialog("Searching for " + (cityName != null ? cityName : "location"));
+                weatherAPIClient.getWeatherData(lat, lon, MainActivity.this);
+            });
+        }
+
+        @JavascriptInterface
         public void requestCurrentLocation() {
             runOnUiThread(() -> getLocation());
         }
