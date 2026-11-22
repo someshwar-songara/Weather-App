@@ -4,6 +4,8 @@ import java.util.List;
 
 public class WeatherData {
     private String city;
+    private double latitude;
+    private double longitude;
     private double temperature;
     private double feelsLike;
     private double tempMin;
@@ -41,7 +43,13 @@ public class WeatherData {
     }
 
     public WeatherData(String city, double temperature, double feelsLike, double tempMin, double tempMax, String description, int humidity, double windSpeed, double visibility, int aqi, String aqiCategory, String aqiProminentPollutant, double pm25, double pm10, double no2, double so2, double co, double o3, int pressure, String sunrise, String sunset, int windDeg, double uvIndex, List<ForecastItem> forecast) {
+        this(city, 23.1789, 75.7859, temperature, feelsLike, tempMin, tempMax, description, humidity, windSpeed, visibility, aqi, aqiCategory, aqiProminentPollutant, pm25, pm10, no2, so2, co, o3, pressure, sunrise, sunset, windDeg, uvIndex, forecast);
+    }
+
+    public WeatherData(String city, double latitude, double longitude, double temperature, double feelsLike, double tempMin, double tempMax, String description, int humidity, double windSpeed, double visibility, int aqi, String aqiCategory, String aqiProminentPollutant, double pm25, double pm10, double no2, double so2, double co, double o3, int pressure, String sunrise, String sunset, int windDeg, double uvIndex, List<ForecastItem> forecast) {
         this.city = city;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.temperature = temperature;
         this.feelsLike = feelsLike;
         this.tempMin = tempMin;
@@ -69,6 +77,14 @@ public class WeatherData {
 
     public String getCity() {
         return city;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
     }
 
     public double getTemperature() {

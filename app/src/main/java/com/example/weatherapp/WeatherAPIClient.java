@@ -237,8 +237,11 @@ public class WeatherAPIClient {
                 uvIndex = Math.max(1.0, Math.round((9.0 - (clouds / 15.0)) * 10.0) / 10.0);
             }
 
+            double lat = currentWeatherJson.has("coord") ? currentWeatherJson.getJSONObject("coord").optDouble("lat", 23.1789) : 23.1789;
+            double lon = currentWeatherJson.has("coord") ? currentWeatherJson.getJSONObject("coord").optDouble("lon", 75.7859) : 75.7859;
+
             return new WeatherData(
-                    city, temperature, feelsLike, tempMin, tempMax, description,
+                    city, lat, lon, temperature, feelsLike, tempMin, tempMax, description,
                     humidity, windSpeed, visibility, cpcb.aqi, cpcb.category,
                     cpcb.dominantPollutant, cpcb.pm25, cpcb.pm10, cpcb.no2,
                     cpcb.so2, cpcb.co, cpcb.o3, pressure, sunrise, sunset,

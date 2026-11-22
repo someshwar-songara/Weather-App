@@ -56,6 +56,7 @@
             this.setupCardTilt();
             this.setupAudio();
             this.renderSavedCities();
+            this.initDopplerRadar();
 
             // Initial Sample Data (Google Stitch benchmark)
             this.loadInitialSampleData();
@@ -214,15 +215,6 @@
                 });
             }
 
-            // Radar Play Loop toggle
-            var radarPlayBtn = document.getElementById('radarPlayBtn');
-            if (radarPlayBtn) {
-                radarPlayBtn.addEventListener('click', function () {
-                    var isPlaying = radarPlayBtn.classList.toggle('playing');
-                    radarPlayBtn.style.background = isPlaying ? 'var(--emerald-green)' : 'var(--primary-cyan)';
-                });
-            }
-
             // Window resize -> Redraw chart
             window.addEventListener('resize', function () {
                 if (self.weatherData) {
@@ -271,7 +263,14 @@
             var targetId = '';
             if (tab === 'forecast') targetId = 'hourlySection';
             else if (tab === 'chart') targetId = 'chartSection';
-            else if (tab === 'radar') targetId = 'radarSection';
+            else if (tab === 'radar') {
+                targetId = 'radarSection';
+                if (this.radarMap) {
+                    setTimeout(() => {
+                        this.radarMap.invalidateSize();
+                    }, 300);
+                }
+            }
             else if (tab === 'telemetry') targetId = 'telemetrySection';
             else if (tab === 'cities') {
                 this.openDrawer('locationsDrawer');
@@ -579,6 +578,13 @@
             this.renderHourlyForecast(data.forecast);
             this.renderTemperatureChart(data.forecast);
             this.renderWeeklyForecast(data.forecast, tempVal);
+
+            // Update Live Doppler Radar location
+            var rLat = data.lat !== undefined ? data.lat : (data.coord ? data.coord.lat : null);
+            var rLon = data.lon !== undefined ? data.lon : (data.coord ? data.coord.lon : null);
+            if (rLat !== null && rLon !== null) {
+                this.updateRadarLocation(rLat, rLon, data.city);
+            }
         },
 
         renderHourlyForecast: function (forecastList) {
@@ -882,30 +888,35 @@
 
         loadInitialSampleData: function () {
             this.renderWeather({
-                city: 'San Francisco, US',
+                city: 'Ujjain, IN',
+                lat: 23.1789,
+                lon: 75.7859,
                 temperature: 22,
-                feelsLike: 23,
-                tempMin: 16,
+                feelsLike: 21,
+                tempMin: 18,
                 tempMax: 26,
-                description: 'Partly Cloudy',
-                humidity: 64,
-                windSpeed: 4.2,
-                windDeg: 315,
+                description: 'Clear Sky',
+                humidity: 57,
+                windSpeed: 3.4,
+                windDeg: 45,
                 visibility: 10.0,
-                aqi: 42,
-                pressure: 1014,
+                aqi: 103,
+                aqiCategory: 'Moderate',
+                pm25: 61,
+                pm10: 67,
+                pressure: 1019,
                 uvIndex: 3.5,
-                sunrise: '6:28 AM',
-                sunset: '7:42 PM',
-                isDay: true,
+                sunrise: '6:45 AM',
+                sunset: '5:40 PM',
+                isDay: false,
                 forecast: [
-                    { time: 'Now', temperature: 22, description: 'Partly Cloudy' },
-                    { time: '13:00', temperature: 23, description: 'Partly Cloudy' },
-                    { time: '14:00', temperature: 24, description: 'Cloudy' },
-                    { time: '15:00', temperature: 23, description: 'Rain' },
-                    { time: '16:00', temperature: 21, description: 'Rain' },
-                    { time: '17:00', temperature: 20, description: 'Cloudy' },
-                    { time: '18:00', temperature: 19, description: 'Sunset' }
+                    { time: 'Now', temperature: 22, description: 'Clear Sky' },
+                    { time: '23:00', temperature: 21, description: 'Clear Sky' },
+                    { time: '02:00', temperature: 19, description: 'Clear Sky' },
+                    { time: '05:00', temperature: 18, description: 'Clear Sky' },
+                    { time: '08:00', temperature: 22, description: 'Sunny' },
+                    { time: '11:00', temperature: 25, description: 'Sunny' },
+                    { time: '14:00', temperature: 26, description: 'Sunny' }
                 ]
             });
         },
@@ -1022,6 +1033,8 @@
 
                         var d = {
                             city: cur.name + ', ' + (cur.sys ? cur.sys.country : ''),
+                            lat: lat,
+                            lon: lon,
                             temperature: cur.main.temp,
                             feelsLike: cur.main.feels_like,
                             tempMin: cur.main.temp_min,
@@ -1071,13 +1084,13 @@
         fallbackLocalCity: function (city) {
             var self = this;
             var mockCities = {
-                'tokyo': { city: 'Tokyo, JP', temperature: 18, description: 'Rain', humidity: 82, windSpeed: 5.5, aqi: 28, aqiCategory: 'Good', pm25: 14, pm10: 22, uvIndex: 2.0 },
-                'london': { city: 'London, UK', temperature: 14, description: 'Overcast Clouds', humidity: 76, windSpeed: 6.2, aqi: 35, aqiCategory: 'Good', pm25: 18, pm10: 28, uvIndex: 1.5 },
-                'new york': { city: 'New York, US', temperature: 27, description: 'Clear Sky', humidity: 52, windSpeed: 3.4, aqi: 48, aqiCategory: 'Good', pm25: 24, pm10: 36, uvIndex: 7.0 },
-                'reykjavik': { city: 'Reykjavik, IS', temperature: 1, description: 'Light Snow', humidity: 88, windSpeed: 8.0, aqi: 18, aqiCategory: 'Good', pm25: 6, pm10: 10, uvIndex: 0.5 },
-                'paris': { city: 'Paris, FR', temperature: 19, description: 'Scattered Clouds', humidity: 60, windSpeed: 4.1, aqi: 42, aqiCategory: 'Good', pm25: 22, pm10: 34, uvIndex: 4.0 },
-                'ujjain': { city: 'Ujjain, IN', temperature: 25, description: 'Clear Sky', humidity: 45, windSpeed: 3.2, aqi: 103, aqiCategory: 'Moderate', pm25: 61, pm10: 67, uvIndex: 6.0 },
-                'delhi': { city: 'Delhi, IN', temperature: 24, description: 'Haze', humidity: 55, windSpeed: 2.5, aqi: 241, aqiCategory: 'Poor', pm25: 102, pm10: 123, uvIndex: 4.5 }
+                'tokyo': { city: 'Tokyo, JP', lat: 35.6762, lon: 139.6503, temperature: 18, description: 'Rain', humidity: 82, windSpeed: 5.5, aqi: 28, aqiCategory: 'Good', pm25: 14, pm10: 22, uvIndex: 2.0 },
+                'london': { city: 'London, UK', lat: 51.5074, lon: -0.1278, temperature: 14, description: 'Overcast Clouds', humidity: 76, windSpeed: 6.2, aqi: 35, aqiCategory: 'Good', pm25: 18, pm10: 28, uvIndex: 1.5 },
+                'new york': { city: 'New York, US', lat: 40.7128, lon: -74.0060, temperature: 27, description: 'Clear Sky', humidity: 52, windSpeed: 3.4, aqi: 48, aqiCategory: 'Good', pm25: 24, pm10: 36, uvIndex: 7.0 },
+                'reykjavik': { city: 'Reykjavik, IS', lat: 64.1466, lon: -21.9426, temperature: 1, description: 'Light Snow', humidity: 88, windSpeed: 8.0, aqi: 18, aqiCategory: 'Good', pm25: 6, pm10: 10, uvIndex: 0.5 },
+                'paris': { city: 'Paris, FR', lat: 48.8566, lon: 2.3522, temperature: 19, description: 'Scattered Clouds', humidity: 60, windSpeed: 4.1, aqi: 42, aqiCategory: 'Good', pm25: 22, pm10: 34, uvIndex: 4.0 },
+                'ujjain': { city: 'Ujjain, IN', lat: 23.1789, lon: 75.7859, temperature: 25, description: 'Clear Sky', humidity: 45, windSpeed: 3.2, aqi: 103, aqiCategory: 'Moderate', pm25: 61, pm10: 67, uvIndex: 6.0 },
+                'delhi': { city: 'Delhi, IN', lat: 28.6139, lon: 77.2090, temperature: 24, description: 'Haze', humidity: 55, windSpeed: 2.5, aqi: 241, aqiCategory: 'Poor', pm25: 102, pm10: 123, uvIndex: 4.5 }
             };
 
             var key = city.toLowerCase().trim();
@@ -1098,6 +1111,313 @@
         capitalize: function (str) {
             if (!str) return '';
             return str.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        },
+
+        /* ==========================================================================
+           Live Doppler Radar Controller (Powered by RainViewer Global Radar Feed)
+           ========================================================================== */
+        initDopplerRadar: function () {
+            var self = this;
+            var radarMapEl = document.getElementById('radarMap');
+            if (!radarMapEl) return;
+
+            this.radarLat = (this.weatherData && this.weatherData.lat) ? this.weatherData.lat : 23.1789;
+            this.radarLon = (this.weatherData && this.weatherData.lon) ? this.weatherData.lon : 75.7859;
+            this.radarFrames = [];
+            this.radarFrameIndex = 0;
+            this.radarTimer = null;
+            this.radarLayer = null;
+            this.radarLayerType = 'radar';
+            this.radarHost = 'https://tilecache.rainviewer.com';
+
+            try {
+                if (window.L) {
+                    this.radarMap = L.map('radarMap', {
+                        center: [this.radarLat, this.radarLon],
+                        zoom: 7,
+                        minZoom: 3,
+                        maxZoom: 15,
+                        zoomControl: false,
+                        attributionControl: false,
+                        fadeAnimation: true,
+                        zoomAnimation: true
+                    });
+
+                    // ESRI Dark Gray Canvas basemap (free, keyless, high performance dark theme)
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 16,
+                        attribution: ''
+                    }).addTo(this.radarMap);
+
+                    // ESRI Dark Gray Reference overlay for boundaries and place names
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 16,
+                        zIndex: 300,
+                        attribution: ''
+                    }).addTo(this.radarMap);
+
+                    // Pulse Beacon Marker on map
+                    var beaconIcon = L.divIcon({
+                        className: 'radar-marker-pulse',
+                        html: '<div class="marker-ring"></div><div class="marker-core"></div>',
+                        iconSize: [22, 22],
+                        iconAnchor: [11, 11]
+                    });
+                    this.radarBeacon = L.marker([this.radarLat, this.radarLon], { icon: beaconIcon, zIndexOffset: 1000 }).addTo(this.radarMap);
+
+                    setTimeout(function () {
+                        if (self.radarMap) self.radarMap.invalidateSize();
+                    }, 400);
+
+                    this.fetchRainViewerFrames();
+                } else {
+                    console.log('Leaflet not loaded, activating canvas radar simulation');
+                    this.initFallbackRadarCanvas();
+                }
+            } catch (err) {
+                console.error('Error initializing Leaflet radar:', err);
+                this.initFallbackRadarCanvas();
+            }
+
+            this.setupRadarControls();
+        },
+
+        fetchRainViewerFrames: function () {
+            var self = this;
+            var statusText = document.getElementById('radarStatusText');
+            if (statusText) statusText.textContent = 'Syncing...';
+
+            fetch('https://api.rainviewer.com/public/weather-maps.json')
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    self.radarHost = data.host || 'https://tilecache.rainviewer.com';
+                    self.radarData = data;
+
+                    var frames = [];
+                    if (self.radarLayerType === 'satellite' && data.satellite && data.satellite.infrared) {
+                        frames = data.satellite.infrared;
+                    } else if (data.radar && data.radar.past) {
+                        frames = data.radar.past.concat(data.radar.nowcast || []);
+                    }
+
+                    self.radarFrames = frames;
+                    if (frames.length > 0) {
+                        self.radarFrameIndex = frames.length - 1;
+                        self.showRadarFrame(self.radarFrameIndex);
+                    }
+
+                    if (statusText) statusText.textContent = 'Active Doppler';
+                })
+                .catch(function (err) {
+                    console.log('RainViewer fetch fallback:', err);
+                    if (statusText) statusText.textContent = 'Radar Active';
+                    self.initFallbackRadarCanvas();
+                });
+        },
+
+        showRadarFrame: function (index) {
+            if (!this.radarMap || !this.radarFrames || this.radarFrames.length === 0) return;
+            var frame = this.radarFrames[index];
+            if (!frame) return;
+
+            var tileUrl = '';
+            if (this.radarLayerType === 'satellite') {
+                tileUrl = this.radarHost + frame.path + '/256/{z}/{x}/{y}/0/0_0.png';
+            } else {
+                // Scheme 2: multi-color Doppler precipitation palette
+                tileUrl = this.radarHost + frame.path + '/256/{z}/{x}/{y}/2/1_1.png';
+            }
+
+            if (this.radarLayer) {
+                this.radarMap.removeLayer(this.radarLayer);
+            }
+
+            this.radarLayer = L.tileLayer(tileUrl, {
+                opacity: 0.78,
+                zIndex: 200,
+                maxZoom: 18
+            }).addTo(this.radarMap);
+
+            var total = this.radarFrames.length;
+            var pct = total > 1 ? (index / (total - 1)) * 100 : 100;
+            var fill = document.getElementById('radarTimelineFill');
+            var thumb = document.getElementById('radarTimelineThumb');
+            if (fill) fill.style.width = pct + '%';
+            if (thumb) thumb.style.left = pct + '%';
+
+            var timeBadge = document.getElementById('radarTimestampText');
+            if (timeBadge && frame.time) {
+                var d = new Date(frame.time * 1000);
+                var isLatest = index === total - 1;
+                var timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                timeBadge.textContent = isLatest ? 'Live (' + timeStr + ')' : timeStr;
+            }
+        },
+
+        toggleRadarPlayback: function () {
+            var self = this;
+            var playBtn = document.getElementById('radarPlayBtn');
+            var playIcon = document.getElementById('radarPlayIcon');
+            var pauseIcon = document.getElementById('radarPauseIcon');
+
+            if (this.radarTimer) {
+                clearInterval(this.radarTimer);
+                this.radarTimer = null;
+                if (playBtn) playBtn.classList.remove('playing');
+                if (playIcon) playIcon.classList.remove('hidden');
+                if (pauseIcon) pauseIcon.classList.add('hidden');
+            } else {
+                if (playBtn) playBtn.classList.add('playing');
+                if (playIcon) playIcon.classList.add('hidden');
+                if (pauseIcon) pauseIcon.classList.remove('hidden');
+
+                this.radarTimer = setInterval(function () {
+                    if (!self.radarFrames || self.radarFrames.length === 0) return;
+                    self.radarFrameIndex = (self.radarFrameIndex + 1) % self.radarFrames.length;
+                    self.showRadarFrame(self.radarFrameIndex);
+                }, 650);
+            }
+        },
+
+        setupRadarControls: function () {
+            var self = this;
+
+            var playBtn = document.getElementById('radarPlayBtn');
+            if (playBtn) {
+                playBtn.addEventListener('click', function () {
+                    self.toggleRadarPlayback();
+                });
+            }
+
+            var track = document.getElementById('radarTimelineTrack');
+            if (track) {
+                var handleScrub = function (e) {
+                    if (!self.radarFrames || self.radarFrames.length === 0) return;
+                    var rect = track.getBoundingClientRect();
+                    var clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : rect.left);
+                    var x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                    var ratio = x / rect.width;
+                    var targetIndex = Math.round(ratio * (self.radarFrames.length - 1));
+                    self.radarFrameIndex = targetIndex;
+                    self.showRadarFrame(targetIndex);
+                };
+
+                track.addEventListener('click', handleScrub);
+                track.addEventListener('touchmove', handleScrub);
+            }
+
+            var btnPrecip = document.getElementById('btnRadarPrecip');
+            var btnSat = document.getElementById('btnRadarSatellite');
+            if (btnPrecip && btnSat) {
+                btnPrecip.addEventListener('click', function () {
+                    btnPrecip.classList.add('active');
+                    btnSat.classList.remove('active');
+                    self.radarLayerType = 'radar';
+                    self.fetchRainViewerFrames();
+                });
+
+                btnSat.addEventListener('click', function () {
+                    btnSat.classList.add('active');
+                    btnPrecip.classList.remove('active');
+                    self.radarLayerType = 'satellite';
+                    self.fetchRainViewerFrames();
+                });
+            }
+
+            var btnRecenter = document.getElementById('btnRadarRecenter');
+            if (btnRecenter) {
+                btnRecenter.addEventListener('click', function () {
+                    if (self.radarMap) {
+                        self.radarMap.flyTo([self.radarLat, self.radarLon], 7, { animate: true, duration: 0.8 });
+                    }
+                });
+            }
+
+            var btnZoomIn = document.getElementById('btnRadarZoomIn');
+            if (btnZoomIn) {
+                btnZoomIn.addEventListener('click', function () {
+                    if (self.radarMap) self.radarMap.zoomIn();
+                });
+            }
+
+            var btnZoomOut = document.getElementById('btnRadarZoomOut');
+            if (btnZoomOut) {
+                btnZoomOut.addEventListener('click', function () {
+                    if (self.radarMap) self.radarMap.zoomOut();
+                });
+            }
+        },
+
+        updateRadarLocation: function (lat, lon, cityName) {
+            this.radarLat = lat;
+            this.radarLon = lon;
+
+            var beaconCity = document.getElementById('radarBeaconCity');
+            if (beaconCity && cityName) {
+                beaconCity.textContent = cityName.split(',')[0];
+            }
+
+            if (this.radarMap) {
+                this.radarMap.flyTo([lat, lon], 7, { animate: true, duration: 1.0 });
+                if (this.radarBeacon) {
+                    this.radarBeacon.setLatLng([lat, lon]);
+                }
+                setTimeout(function () {
+                    if (window.WeatherApp && window.WeatherApp.radarMap) {
+                        window.WeatherApp.radarMap.invalidateSize();
+                    }
+                }, 300);
+            }
+        },
+
+        initFallbackRadarCanvas: function () {
+            var canvas = document.getElementById('radarFallbackCanvas');
+            if (!canvas) return;
+            canvas.classList.remove('hidden');
+
+            var ctx = canvas.getContext('2d');
+            var width = canvas.width = canvas.offsetWidth || 300;
+            var height = canvas.height = canvas.offsetHeight || 200;
+            var cx = width / 2;
+            var cy = height / 2;
+            var maxR = Math.min(width, height) * 0.45;
+            var angle = 0;
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+                ctx.lineWidth = 1;
+                for (var r = maxR / 3; r <= maxR; r += maxR / 3) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy);
+                ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR);
+                ctx.stroke();
+
+                angle += 0.035;
+                var sweepX = cx + Math.cos(angle) * maxR;
+                var sweepY = cy + Math.sin(angle) * maxR;
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(sweepX, sweepY);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(52, 211, 153, 0.35)';
+                ctx.beginPath();
+                ctx.arc(cx + 35, cy - 25, 20, 0, Math.PI * 2);
+                ctx.fill();
+
+                requestAnimationFrame(draw);
+            }
+            draw();
         }
     };
 

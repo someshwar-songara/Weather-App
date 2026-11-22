@@ -552,6 +552,8 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
         try {
             JSONObject json = new JSONObject();
             json.put("city", currentWeatherData.getCity());
+            json.put("lat", currentWeatherData.getLatitude());
+            json.put("lon", currentWeatherData.getLongitude());
             json.put("temperature", currentWeatherData.getTemperature());
             json.put("feelsLike", currentWeatherData.getFeelsLike());
             json.put("tempMin", currentWeatherData.getTempMin());
