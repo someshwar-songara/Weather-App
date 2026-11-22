@@ -39,6 +39,9 @@
             </div>
 
             <div class="nav-actions">
+                <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
                 <button class="icon-btn" id="soundToggleBtn" aria-label="Toggle Sound" title="Toggle Ambient Audio">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
@@ -111,9 +114,11 @@
                 <div class="scene-controls-toolbar">
                     <button class="scene-btn active" data-condition="partly_cloudy" data-day="true">Auto</button>
                     <button class="scene-btn" data-condition="clear" data-day="true">Sun</button>
+                    <button class="scene-btn" data-condition="cloudy" data-day="true">Cloud</button>
                     <button class="scene-btn" data-condition="rain" data-day="true">Rain</button>
                     <button class="scene-btn" data-condition="thunderstorm" data-day="true">Storm</button>
                     <button class="scene-btn" data-condition="snow" data-day="true">Snow</button>
+                    <button class="scene-btn" data-condition="sunset" data-day="true" data-sunset="true">Sunset</button>
                     <button class="scene-btn" data-condition="clear" data-day="false">Night</button>
                 </div>
             </div>
@@ -246,6 +251,23 @@
                 </div>
             </div>
 
+            <!-- 4. Atmospheric Dynamics Interactive Bezier Curve Chart -->
+            <div class="glass-panel chart-card chart-col" id="chartSection">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>Atmospheric Dynamics</span>
+                    </div>
+                    <div class="chart-header-actions">
+                        <button class="chart-pill-btn active" data-chart="temp">Temperature</button>
+                        <button class="chart-pill-btn" data-chart="rain">Precipitation</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrap">
+                    <canvas id="tempCurveCanvas"></canvas>
+                </div>
+            </div>
+
             <!-- 4. 7-Day Forecast Bento Panel -->
             <div class="glass-panel weekly-forecast-card forecast-weekly-col">
                 <div class="section-header">
@@ -342,6 +364,10 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
                     <span>Forecast</span>
                 </button>
+                <button class="dock-btn" data-tab="chart">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>Dynamics</span>
+                </button>
                 <button class="dock-btn" data-tab="radar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M15.54 8.46a5 5 0 0 0-7.07 7.07M12 12v.01"/></svg>
                     <span>Radar</span>
@@ -350,9 +376,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
                     <span>Telemetry</span>
                 </button>
-                <button class="dock-btn" data-tab="settings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Settings</span>
+                <button class="dock-btn" data-tab="cities">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>Cities</span>
                 </button>
             </nav>
         </div>
@@ -371,45 +397,14 @@
             </button>
         </div>
 
-        <div class="saved-city-card" data-city="San Francisco">
-            <div>
-                <div class="saved-city-name">San Francisco</div>
-                <div class="saved-city-country">United States · Current Location</div>
-            </div>
-            <div class="saved-city-temp">22°</div>
+        <!-- Add City to Saved List -->
+        <div class="add-city-wrap">
+            <input type="text" id="inputAddSavedCity" class="add-city-input" placeholder="Add city name (e.g. Paris)..." autocomplete="off">
+            <button class="add-city-btn" id="btnAddSavedCity">Add</button>
         </div>
 
-        <div class="saved-city-card" data-city="Tokyo">
-            <div>
-                <div class="saved-city-name">Tokyo</div>
-                <div class="saved-city-country">Japan · Night Rain</div>
-            </div>
-            <div class="saved-city-temp">18°</div>
-        </div>
-
-        <div class="saved-city-card" data-city="London">
-            <div>
-                <div class="saved-city-name">London</div>
-                <div class="saved-city-country">United Kingdom · Overcast</div>
-            </div>
-            <div class="saved-city-temp">14°</div>
-        </div>
-
-        <div class="saved-city-card" data-city="New York">
-            <div>
-                <div class="saved-city-name">New York</div>
-                <div class="saved-city-country">United States · Sunny & Clear</div>
-            </div>
-            <div class="saved-city-temp">27°</div>
-        </div>
-
-        <div class="saved-city-card" data-city="Reykjavik">
-            <div>
-                <div class="saved-city-name">Reykjavik</div>
-                <div class="saved-city-country">Iceland · Light Snow</div>
-            </div>
-            <div class="saved-city-temp">1°</div>
-        </div>
+        <!-- Dynamic Saved Cities List Container -->
+        <div id="savedCitiesList"></div>
     </aside>
 
     <!-- Settings & System Diagnostics Side Drawer -->
@@ -446,6 +441,15 @@
             <span class="system-info-val" style="color: var(--primary-cyan);">60 FPS</span>
         </div>
     </aside>
+
+    <!-- Cinematic Radar Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-radar-ring"></div>
+            <div class="loading-title">Updating Atmosphere 3D</div>
+            <div class="loading-subtitle">Synchronizing live satellite telemetry...</div>
+        </div>
+    </div>
 
     <!-- Bundled Three.js Engine & App Scripts -->
     <script src="js/three.min.js"></script>
