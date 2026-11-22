@@ -507,6 +507,11 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
             webSettings.setLoadsImagesAutomatically(true);
             webSettings.setMediaPlaybackRequiresUserGesture(false);
             webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+            webSettings.setUseWideViewPort(true);
+            webSettings.setLoadWithOverviewMode(true);
+            webSettings.setSupportZoom(false);
+            webSettings.setBuiltInZoomControls(false);
+            webSettings.setDisplayZoomControls(false);
 
             webView3D.setLayerType(View.LAYER_TYPE_HARDWARE, null);
             webView3D.setBackgroundColor(0xFF080E1D);

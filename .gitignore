@@ -18,3 +18,4 @@ local.properties
 # Built binaries
 *.apk
 *.aab
+screenshot_*.png

@@ -987,7 +987,7 @@
 
         capitalize: function (str) {
             if (!str) return '';
-            return str.charAt(0).toUpperCase() + str.slice(1);
+            return str.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
         }
     };
 

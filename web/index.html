@@ -12,119 +12,164 @@
 </head>
 <body>
 
-    <!-- Atmospheric Radiant Background Spheres -->
+    <!-- Atmospheric Radiant Background Glowing Spheres -->
     <div class="aurora-bg">
         <div class="aurora-sphere sphere-1"></div>
         <div class="aurora-sphere sphere-2"></div>
         <div class="aurora-sphere sphere-3"></div>
     </div>
 
-    <!-- Main Application Shell -->
+    <!-- Main Responsive Application Container -->
     <div class="app-container">
 
-        <!-- Top Navigation Bar -->
+        <!-- Top Navigation Bar (Sleek, No-Overflow Design) -->
         <header class="top-nav">
-            <div class="nav-brand" id="locationBtn">
+            <div class="nav-brand" id="locationBtn" title="Detect GPS Current Location">
                 <div class="live-dot">
                     <span class="pulse"></span>
                     <span></span>
                 </div>
-                <div>
+                <div class="brand-info">
                     <div class="brand-text">Atmosphere</div>
                     <div class="location-badge">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
-                        <span id="tvCityName">San Francisco, US</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+                        <span id="tvCityName">San Francisco</span>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                 </div>
             </div>
 
             <div class="nav-actions">
                 <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                 </button>
-                <button class="icon-btn" id="soundToggleBtn" aria-label="Toggle Sound" title="Toggle Ambient Audio">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <button class="unit-toggle" id="unitToggleBtn" aria-label="Toggle Unit" title="Toggle °C / °F">°C</button>
+                <button class="icon-btn" id="openSearchDrawerBtn" aria-label="Saved Cities" title="Saved Locations">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </button>
-                <button class="unit-toggle" id="unitToggleBtn" aria-label="Toggle Temperature Unit">°C</button>
-                <button class="icon-btn" id="openSearchDrawerBtn" aria-label="Search Locations">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                </button>
-                <button class="icon-btn" id="openSettingsDrawerBtn" aria-label="Settings & Menu">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                <button class="icon-btn" id="openSettingsDrawerBtn" aria-label="Settings" title="Diagnostics & Settings">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
                 </button>
             </div>
         </header>
 
-        <!-- Recessed Search Input Field -->
+        <!-- Recessed Global Search Bar -->
         <div class="search-bar-wrap">
             <div class="search-bar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" id="citySearchInput" placeholder="Search city or location worldwide..." autocomplete="off">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="citySearchInput" placeholder="Search city worldwide..." autocomplete="off">
             </div>
         </div>
 
         <!-- Weather Advisory Banner -->
         <div class="alert-banner" id="alertBanner" style="display: none;">
             <div class="alert-content">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <div>
                     <div class="alert-title" id="alertTitle">High Wind Advisory</div>
                     <div class="alert-desc" id="alertDesc">In effect until 8:00 PM PST · Sustained gusts detected</div>
                 </div>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
 
         <!-- Bento Grid Dashboard -->
         <div class="dashboard-grid">
 
-            <!-- 1. 3D Hero Weather Stage Card -->
-            <div class="glass-panel hero-stage-card hero-weather-col">
-                <!-- Three.js Canvas Container -->
-                <div class="canvas-3d-wrapper" id="heroWeatherCanvas"></div>
-
-                <!-- Overlay Typography -->
-                <div class="hero-overlay-content">
-                    <div class="hero-top-meta">
-                        <div>
-                            <div class="date-subtitle" id="tvCurrentDate">Tuesday, Nov 18 · 10:45 AM</div>
-                        </div>
-                        <div class="interactive-pill-badge" title="Drag with mouse or touch to rotate 3D scene">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                            3D Interactive
-                        </div>
-                    </div>
-
-                    <div class="hero-bottom-metrics">
-                        <div class="temperature-display">
-                            <span id="tvHeroTemperature">22</span>
-                            <span class="temp-unit-symbol" id="tvTempUnitSymbol">°C</span>
-                        </div>
-                        <div class="weather-condition-pill">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-                            <span id="tvConditionText">Partly Cloudy</span>
-                        </div>
-                        <div class="high-low-capsule" id="tvHighLowSummary">
-                            Feels like 23° <span class="dot">·</span> H: 26° <span class="dot">·</span> L: 16°
-                        </div>
+            <!-- 1. Redesigned 3D Hero Weather Stage Card -->
+            <div class="glass-panel hero-stage-card">
+                <!-- Top Card Meta Header -->
+                <div class="hero-card-header">
+                    <span class="hero-date" id="tvCurrentDate">Sunday, Nov 22 · 10:02 PM</span>
+                    <div class="hero-3d-badge" title="Touch & drag to rotate 3D weather world">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <span>3D Interactive</span>
                     </div>
                 </div>
 
-                <!-- 3D Scene Controls Preset Switcher -->
-                <div class="scene-controls-toolbar">
-                    <button class="scene-btn active" data-condition="partly_cloudy" data-day="true">Auto</button>
-                    <button class="scene-btn" data-condition="clear" data-day="true">Sun</button>
-                    <button class="scene-btn" data-condition="cloudy" data-day="true">Cloud</button>
-                    <button class="scene-btn" data-condition="rain" data-day="true">Rain</button>
-                    <button class="scene-btn" data-condition="thunderstorm" data-day="true">Storm</button>
-                    <button class="scene-btn" data-condition="snow" data-day="true">Snow</button>
-                    <button class="scene-btn" data-condition="sunset" data-day="true" data-sunset="true">Sunset</button>
-                    <button class="scene-btn" data-condition="clear" data-day="false">Night</button>
+                <!-- Dedicated 3D Artwork Stage Frame -->
+                <div class="hero-3d-stage">
+                    <div class="hero-stage-glow"></div>
+                    <div class="canvas-3d-wrapper" id="heroWeatherCanvas"></div>
+                </div>
+
+                <!-- Hero Metrics (Crisp, Spacious, Centered) -->
+                <div class="hero-info-section">
+                    <div class="temperature-display">
+                        <span id="tvHeroTemperature">22</span><span class="temp-unit-symbol" id="tvTempUnitSymbol">°</span>
+                    </div>
+                    
+                    <div class="weather-condition-pill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                        <span id="tvConditionText">Partly Cloudy</span>
+                    </div>
+
+                    <div class="high-low-capsule" id="tvHighLowSummary">
+                        Feels like 22° <span class="dot">·</span> H: 26° <span class="dot">·</span> L: 16°
+                    </div>
+                </div>
+
+                <!-- Sleek 3D Environment Preset Switcher Strip -->
+                <div class="scene-presets-strip">
+                    <div class="scene-controls-toolbar">
+                        <button class="scene-btn active" data-condition="partly_cloudy" data-day="true">Auto</button>
+                        <button class="scene-btn" data-condition="clear" data-day="true">Sun</button>
+                        <button class="scene-btn" data-condition="cloudy" data-day="true">Cloud</button>
+                        <button class="scene-btn" data-condition="rain" data-day="true">Rain</button>
+                        <button class="scene-btn" data-condition="thunderstorm" data-day="true">Storm</button>
+                        <button class="scene-btn" data-condition="snow" data-day="true">Snow</button>
+                        <button class="scene-btn" data-condition="sunset" data-day="true" data-sunset="true">Sunset</button>
+                        <button class="scene-btn" data-condition="clear" data-day="false">Night</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2. Precision Weather Telemetry Grid -->
-            <div class="telemetry-col" id="telemetrySection">
+            <!-- 2. Atmospheric Dynamics Interactive Bezier Curve Chart -->
+            <div class="glass-panel chart-card" id="chartSection">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>Atmospheric Dynamics</span>
+                    </div>
+                    <div class="chart-header-actions">
+                        <button class="chart-pill-btn active" data-chart="temp">Temperature</button>
+                        <button class="chart-pill-btn" data-chart="rain">Precipitation</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrap">
+                    <canvas id="tempCurveCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Hourly Forecast Carousel Card -->
+            <div class="glass-panel hourly-card" id="hourlySection">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Hourly Forecast</span>
+                    </div>
+                    <span class="section-badge">Next 24h</span>
+                </div>
+                <div class="hourly-track" id="hourlyTrack">
+                    <!-- Injected dynamically by app.js -->
+                </div>
+            </div>
+
+            <!-- 4. 7-Day Forecast Bento Panel -->
+            <div class="glass-panel weekly-forecast-card" id="weeklySection">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>7-Day Forecast</span>
+                    </div>
+                </div>
+                <div class="daily-rows-wrap" id="dailyRowsContainer">
+                    <!-- Injected dynamically by app.js with Apple weather gradient range bars -->
+                </div>
+            </div>
+
+            <!-- 5. Precision Weather Telemetry Grid -->
+            <div class="telemetry-section" id="telemetrySection">
                 <div class="telemetry-grid">
                     <!-- AQI Card -->
                     <div class="glass-panel telemetry-card">
@@ -237,52 +282,8 @@
                 </div>
             </div>
 
-            <!-- 3. Hourly Forecast Carousel Card -->
-            <div class="glass-panel hourly-card forecast-hourly-col" id="hourlySection">
-                <div class="section-header">
-                    <div class="section-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <span>Hourly Forecast</span>
-                    </div>
-                    <span class="section-badge">Next 24h</span>
-                </div>
-                <div class="hourly-track" id="hourlyTrack">
-                    <!-- Injected dynamically by app.js -->
-                </div>
-            </div>
-
-            <!-- 4. Atmospheric Dynamics Interactive Bezier Curve Chart -->
-            <div class="glass-panel chart-card chart-col" id="chartSection">
-                <div class="section-header">
-                    <div class="section-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        <span>Atmospheric Dynamics</span>
-                    </div>
-                    <div class="chart-header-actions">
-                        <button class="chart-pill-btn active" data-chart="temp">Temperature</button>
-                        <button class="chart-pill-btn" data-chart="rain">Precipitation</button>
-                    </div>
-                </div>
-                <div class="chart-canvas-wrap">
-                    <canvas id="tempCurveCanvas"></canvas>
-                </div>
-            </div>
-
-            <!-- 4. 7-Day Forecast Bento Panel -->
-            <div class="glass-panel weekly-forecast-card forecast-weekly-col">
-                <div class="section-header">
-                    <div class="section-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <span>7-Day Forecast</span>
-                    </div>
-                </div>
-                <div class="daily-rows-wrap" id="dailyRowsContainer">
-                    <!-- Injected dynamically by app.js with Apple weather gradient range bars -->
-                </div>
-            </div>
-
-            <!-- 5. Doppler Radar Preview Card -->
-            <div class="glass-panel radar-card radar-col" id="radarSection">
+            <!-- 6. Doppler Radar Preview Card -->
+            <div class="glass-panel radar-card" id="radarSection">
                 <div class="section-header">
                     <div class="section-title">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M15.54 8.46a5 5 0 0 0-7.07 7.07M12 12v.01"/></svg>
@@ -315,8 +316,8 @@
                 </div>
             </div>
 
-            <!-- 6. Solar Ephemeris & Daylight Trajectory Arc Card -->
-            <div class="glass-panel ephemeris-card ephemeris-col">
+            <!-- 7. Solar Ephemeris & Daylight Trajectory Arc Card -->
+            <div class="glass-panel ephemeris-card" id="ephemerisSection">
                 <div class="section-header">
                     <div class="section-title">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -388,7 +389,7 @@
     <!-- Drawer Backdrop -->
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
-    <!-- Locations & Saved Cities Side Drawer -->
+    <!-- Saved Locations Side Drawer -->
     <aside class="side-drawer" id="locationsDrawer">
         <div class="drawer-header">
             <h2 class="drawer-title">Saved Locations</h2>
@@ -397,17 +398,17 @@
             </button>
         </div>
 
-        <!-- Add City to Saved List -->
+        <!-- Add City Form -->
         <div class="add-city-wrap">
             <input type="text" id="inputAddSavedCity" class="add-city-input" placeholder="Add city name (e.g. Paris)..." autocomplete="off">
             <button class="add-city-btn" id="btnAddSavedCity">Add</button>
         </div>
 
-        <!-- Dynamic Saved Cities List Container -->
+        <!-- Dynamic Saved Cities Container -->
         <div id="savedCitiesList"></div>
     </aside>
 
-    <!-- Settings & System Diagnostics Side Drawer -->
+    <!-- Settings & Diagnostics Side Drawer -->
     <aside class="side-drawer" id="settingsDrawer">
         <div class="drawer-header">
             <h2 class="drawer-title">Settings & Diagnostics</h2>
@@ -418,7 +419,7 @@
 
         <div class="system-info-row">
             <span class="system-info-label">Application</span>
-            <span class="system-info-val">Atmosphere 3D v2.0</span>
+            <span class="system-info-val">Atmosphere 3D v2.2</span>
         </div>
         <div class="system-info-row">
             <span class="system-info-label">Renderer</span>
