@@ -210,6 +210,18 @@
                     self.renderTemperatureChart(self.weatherData.forecast);
                 }
             });
+
+            // Hero 3D Stage Interactive Tap Surge (Pulse Waves & Chime)
+            var heroCanvas = document.getElementById('heroWeatherCanvas');
+            var heroStage = document.querySelector('.hero-3d-stage');
+            var handleHeroTap = function () {
+                if (self.weather3D && self.weather3D.triggerPulse) {
+                    self.weather3D.triggerPulse();
+                }
+                self.playChime();
+            };
+            if (heroCanvas) heroCanvas.addEventListener('click', handleHeroTap);
+            if (heroStage) heroStage.addEventListener('click', handleHeroTap);
         },
 
         toggleTheme: function () {
@@ -410,25 +422,21 @@
                 highLowEl.innerHTML = 'Feels like ' + feelsVal + '° <span class="dot">·</span> H: ' + highVal + '° <span class="dot">·</span> L: ' + lowVal + '°';
             }
 
-            // Update 3D Engine State
-            var auroraBg = document.querySelector('.aurora-bg');
+            // Update 3D Engine State & Dynamic Weather Aurora Themes
+            var isDayTime = true;
+            var isSunset = (condDesc.toLowerCase().indexOf('sunset') !== -1);
+
+            if (data.isDay !== undefined) {
+                isDayTime = data.isDay;
+            } else if (data.sunset && data.sunrise) {
+                var currentHour = new Date().getHours();
+                isDayTime = currentHour >= 6 && currentHour < 19;
+                if (currentHour === 18 || currentHour === 19) isSunset = true;
+            }
+
+            this.updateAtmosphereTheme(condDesc, isDayTime, isSunset);
+
             if (this.weather3D) {
-                var isDayTime = true;
-                var isSunset = (condDesc.toLowerCase().indexOf('sunset') !== -1);
-
-                if (data.isDay !== undefined) {
-                    isDayTime = data.isDay;
-                } else if (data.sunset && data.sunrise) {
-                    var currentHour = new Date().getHours();
-                    isDayTime = currentHour >= 6 && currentHour < 19;
-                    if (currentHour === 18 || currentHour === 19) isSunset = true;
-                }
-
-                if (auroraBg) {
-                    if (isSunset) auroraBg.classList.add('sunset-theme');
-                    else auroraBg.classList.remove('sunset-theme');
-                }
-
                 this.weather3D.setCondition(condDesc, isDayTime, isSunset);
             }
 
@@ -556,6 +564,39 @@
             var pressure = data.pressure || 1014;
             var pressEl = document.getElementById('tvPressureVal');
             if (pressEl) pressEl.textContent = pressure;
+
+            // Quick Highlights Bento Strip Updates
+            var hlRain = document.getElementById('tvHlRain');
+            var hlWind = document.getElementById('tvHlWind');
+            var hlAqi = document.getElementById('tvHlAqi');
+            var hlUv = document.getElementById('tvHlUv');
+
+            if (hlRain) {
+                var rainPct = 10;
+                if (data.rainChance !== undefined) {
+                    rainPct = data.rainChance;
+                } else if (data.forecast && data.forecast[0] && data.forecast[0].rainChance !== undefined) {
+                    rainPct = data.forecast[0].rainChance;
+                } else if (condDesc.toLowerCase().indexOf('rain') !== -1) {
+                    rainPct = 85;
+                } else if (condDesc.toLowerCase().indexOf('cloud') !== -1) {
+                    rainPct = 25;
+                }
+                hlRain.textContent = rainPct + '%';
+            }
+            if (hlWind) {
+                var dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                var deg = data.windDeg || 45;
+                var idx = Math.round((deg % 360) / 45) % 8;
+                hlWind.textContent = windKmh + ' km/h ' + dirs[idx];
+            }
+            if (hlAqi) {
+                hlAqi.textContent = aqiVal + ' · ' + aqiCategory;
+                hlAqi.style.color = aqiColor;
+            }
+            if (hlUv) {
+                hlUv.textContent = uv.toFixed(0) + ' · ' + uvText;
+            }
 
             // Ephemeris Sunrise & Sunset
             var sunriseEl = document.getElementById('tvSunriseTime');
@@ -1229,13 +1270,34 @@
             }
         },
 
+        updateAtmosphereTheme: function (condition, isDay, isSunset) {
+            var auroraBg = document.querySelector('.aurora-bg');
+            if (!auroraBg) return;
+
+            var themes = ['sunset-theme', 'sunny-theme', 'rain-theme', 'storm-theme', 'snow-theme', 'cloudy-theme', 'night-theme'];
+            themes.forEach(function (t) { auroraBg.classList.remove(t); });
+
+            var cond = (condition || '').toLowerCase();
+            if (isSunset) {
+                auroraBg.classList.add('sunset-theme');
+            } else if (!isDay) {
+                auroraBg.classList.add('night-theme');
+            } else if (cond.indexOf('thunder') !== -1 || cond.indexOf('storm') !== -1 || cond.indexOf('lightning') !== -1) {
+                auroraBg.classList.add('storm-theme');
+            } else if (cond.indexOf('rain') !== -1 || cond.indexOf('drizzle') !== -1 || cond.indexOf('shower') !== -1) {
+                auroraBg.classList.add('rain-theme');
+            } else if (cond.indexOf('snow') !== -1 || cond.indexOf('ice') !== -1 || cond.indexOf('blizzard') !== -1 || cond.indexOf('sleet') !== -1) {
+                auroraBg.classList.add('snow-theme');
+            } else if (cond.indexOf('cloud') !== -1 || cond.indexOf('overcast') !== -1 || cond.indexOf('mist') !== -1 || cond.indexOf('fog') !== -1 || cond.indexOf('haze') !== -1) {
+                auroraBg.classList.add('cloudy-theme');
+            } else {
+                auroraBg.classList.add('sunny-theme');
+            }
+        },
+
         setConditionPreset: function (cond, isDay, isSunset) {
             this.playChime();
-            var auroraBg = document.querySelector('.aurora-bg');
-            if (auroraBg) {
-                if (isSunset) auroraBg.classList.add('sunset-theme');
-                else auroraBg.classList.remove('sunset-theme');
-            }
+            this.updateAtmosphereTheme(cond, isDay, isSunset);
 
             if (this.weather3D) {
                 this.weather3D.setCondition(cond, isDay, isSunset);

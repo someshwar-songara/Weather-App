@@ -134,6 +134,46 @@
                 </div>
             </div>
 
+            <!-- Quick Highlights Bento Strip (At-a-Glance Telemetry) -->
+            <div class="highlights-strip" id="quickHighlightsStrip">
+                <div class="highlight-chip" id="hlRainChip" title="Precipitation Probability">
+                    <div class="highlight-chip-icon rain-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><path d="M8 19v2M8 13v2M16 19v2M16 13v2M12 21v2M12 15v2"/></svg>
+                    </div>
+                    <div class="highlight-chip-content">
+                        <span class="highlight-chip-label">Precipitation</span>
+                        <span class="highlight-chip-val" id="tvHlRain">10%</span>
+                    </div>
+                </div>
+                <div class="highlight-chip" id="hlWindChip" title="Wind Velocity & Direction">
+                    <div class="highlight-chip-icon wind-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+                    </div>
+                    <div class="highlight-chip-content">
+                        <span class="highlight-chip-label">Wind</span>
+                        <span class="highlight-chip-val" id="tvHlWind">14 km/h NW</span>
+                    </div>
+                </div>
+                <div class="highlight-chip" id="hlAqiChip" title="India Official CPCB Air Quality Index">
+                    <div class="highlight-chip-icon aqi-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+                    </div>
+                    <div class="highlight-chip-content">
+                        <span class="highlight-chip-label">CPCB AQI</span>
+                        <span class="highlight-chip-val" id="tvHlAqi">45 · Good</span>
+                    </div>
+                </div>
+                <div class="highlight-chip" id="hlUvChip" title="Ultraviolet Solar Radiation Index">
+                    <div class="highlight-chip-icon uv-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    </div>
+                    <div class="highlight-chip-content">
+                        <span class="highlight-chip-label">UV Index</span>
+                        <span class="highlight-chip-val" id="tvHlUv">3 · Mod</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- 2. Atmospheric Dynamics Interactive Bezier Curve Chart -->
             <div class="glass-panel chart-card" id="chartSection">
                 <div class="section-header">
@@ -465,7 +505,7 @@
 
         <div class="system-info-row">
             <span class="system-info-label">Application</span>
-            <span class="system-info-val">Atmosphere 3D v2.2</span>
+            <span class="system-info-val">Atmosphere 3D v2.7.0</span>
         </div>
         <div class="system-info-row">
             <span class="system-info-label">Renderer</span>
