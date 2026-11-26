@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
             webSettings.setDisplayZoomControls(false);
 
             webView3D.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-            webView3D.setBackgroundColor(0xFF080E1D);
+            webView3D.setBackgroundColor(0xFFF1F5F9);
 
             webView3D.setWebChromeClient(new WebChromeClient() {
                 @Override
@@ -576,6 +576,14 @@ public class MainActivity extends AppCompatActivity implements WeatherAPIClient.
             json.put("sunrise", currentWeatherData.getSunrise());
             json.put("sunset", currentWeatherData.getSunset());
             json.put("uvIndex", currentWeatherData.getUvIndex());
+
+            // Smart Sun/Moon & Timezone Properties
+            json.put("dt", currentWeatherData.getDt());
+            json.put("timezone", currentWeatherData.getTimezone());
+            json.put("isDay", currentWeatherData.isDay());
+            json.put("sunriseRaw", currentWeatherData.getSunriseRaw());
+            json.put("sunsetRaw", currentWeatherData.getSunsetRaw());
+            json.put("localTime", currentWeatherData.getLocalTimeString());
 
             JSONArray forecastArray = new JSONArray();
             if (currentWeatherData.getForecast() != null) {

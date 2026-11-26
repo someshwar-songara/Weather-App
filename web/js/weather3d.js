@@ -32,6 +32,8 @@
         this.currentCondition = this.options.initialCondition;
         this.isDay = this.options.isDay;
         this.isSunset = this.options.isSunset;
+        this.currentTheme = this.options.theme || 'light';
+        this.isVisible = true;
 
         this.clock = new THREE.Clock();
         this.mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -51,8 +53,23 @@
         this.initWeatherObjects();
         this.setupEventListeners();
         this.setCondition(this.currentCondition, this.isDay, this.isSunset);
+        this.setTheme(this.currentTheme);
         this.animate();
     }
+
+    Weather3D.prototype.setTheme = function (theme) {
+        this.currentTheme = theme;
+        var isLight = (theme === 'light');
+        if (this.ambientLight) {
+            this.ambientLight.intensity = isLight ? (this.isDay ? 2.0 : 1.4) : (this.isDay ? 1.5 : 0.95);
+        }
+        if (this.sunLight) {
+            this.sunLight.intensity = isLight ? (this.isDay ? 4.0 : 1.8) : (this.isDay ? 3.6 : 1.4);
+        }
+        if (this.renderer) {
+            this.renderer.toneMappingExposure = isLight ? 1.45 : 1.35;
+        }
+    };
 
     Weather3D.prototype.initThree = function () {
         var width = this.container.clientWidth || 240;
@@ -728,6 +745,14 @@
                 }
             }, { passive: true });
         }
+
+        // Viewport intersection observer to pause rendering when offscreen
+        if (typeof IntersectionObserver !== 'undefined' && this.container) {
+            var observer = new IntersectionObserver(function (entries) {
+                self.isVisible = entries[0].isIntersecting;
+            }, { threshold: 0.05 });
+            observer.observe(this.container);
+        }
     };
 
     Weather3D.prototype.onWindowResize = function () {
@@ -749,6 +774,8 @@
         requestAnimationFrame(function () {
             self.animate();
         });
+
+        if (document.hidden || self.isVisible === false) return;
 
         var delta = this.clock.getDelta();
         var elapsed = this.clock.getElapsedTime();

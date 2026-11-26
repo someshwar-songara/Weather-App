@@ -9,11 +9,12 @@
     var app = {
         weather3D: null,
         currentUnit: 'C', // 'C' or 'F'
-        currentTheme: 'dark', // 'dark' or 'light'
+        currentTheme: 'light', // Light theme is primary default
         chartMode: 'temp', // 'temp' or 'rain'
         isSoundEnabled: false,
         audioCtx: null,
         weatherData: null,
+        weatherCache: {},
         apiKey: 'fe0fd088524b43a952088ea92d879d93',
 
         savedCities: [
@@ -28,19 +29,39 @@
         init: function () {
             var self = this;
 
-            // Load saved settings from localStorage
+            // Load saved settings from localStorage (Light theme primary default)
             try {
                 var storedUnit = localStorage.getItem('atmosphere_unit');
                 if (storedUnit) this.currentUnit = storedUnit;
 
                 var storedTheme = localStorage.getItem('atmosphere_theme');
-                if (storedTheme) this.currentTheme = storedTheme;
+                this.currentTheme = storedTheme ? storedTheme : 'light';
 
                 var storedCities = localStorage.getItem('atmosphere_saved_cities');
                 if (storedCities) this.savedCities = JSON.parse(storedCities);
             } catch (e) {}
 
             this.applyTheme(this.currentTheme);
+
+            // Automatic periodic day/night sync timer (every 45s without page reload)
+            setInterval(function () {
+                if (self.weatherData) {
+                    var currentIsDay = self.weatherData.isDay;
+                    var updatedIsDay = true;
+                    if (self.weatherData.sunriseRaw && self.weatherData.sunsetRaw) {
+                        var nowUtc = Math.floor(Date.now() / 1000);
+                        updatedIsDay = (nowUtc >= self.weatherData.sunriseRaw && nowUtc < self.weatherData.sunsetRaw);
+                    } else if (self.weatherData.timezone !== undefined) {
+                        var utcMs = Date.now() + (new Date().getTimezoneOffset() * 60000);
+                        var cityHour = new Date(utcMs + (self.weatherData.timezone * 1000)).getHours();
+                        updatedIsDay = (cityHour >= 6 && cityHour < 19);
+                    }
+                    if (currentIsDay !== undefined && currentIsDay !== updatedIsDay) {
+                        self.weatherData.isDay = updatedIsDay;
+                        self.renderWeather(self.weatherData);
+                    }
+                }
+            }, 45000);
 
             // Initialize Three.js 3D Engine
             if (window.Weather3D) {
@@ -125,6 +146,15 @@
                     presetBtns.forEach(function (b) { b.classList.remove('active'); });
                     btn.classList.add('active');
                     var cond = btn.getAttribute('data-condition');
+                    if (cond === 'auto') {
+                        self.isManualPresetActive = false;
+                        if (self.originalWeatherData) {
+                            self.renderWeather(self.originalWeatherData);
+                        } else if (self.weatherData) {
+                            self.renderWeather(self.weatherData);
+                        }
+                        return;
+                    }
                     var isDay = btn.getAttribute('data-day') !== 'false';
                     var isSunset = btn.getAttribute('data-sunset') === 'true';
                     self.setConditionPreset(cond, isDay, isSunset);
@@ -240,6 +270,9 @@
                 themeBtn.innerHTML = theme === 'dark' 
                     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
                     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            }
+            if (this.weather3D && this.weather3D.setTheme) {
+                this.weather3D.setTheme(theme);
             }
         },
 
@@ -390,14 +423,34 @@
             this.weatherData = data;
             this.hideLoading();
 
-            // City & Date
+            if (!this.isManualPresetActive) {
+                this.originalWeatherData = Object.assign({}, data);
+                var presetBtns = document.querySelectorAll('.scene-btn');
+                presetBtns.forEach(function (b) {
+                    if (b.getAttribute('data-condition') === 'auto' || b.textContent.trim() === 'Auto') {
+                        b.classList.add('active');
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+            }
+
+            // City & Local Date/Time
             var cityEl = document.getElementById('tvCityName');
             if (cityEl) cityEl.textContent = data.city || 'San Francisco';
 
             var dateEl = document.getElementById('tvCurrentDate');
             if (dateEl) {
-                var now = new Date();
-                dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                if (data.localTime) {
+                    dateEl.textContent = data.localTime;
+                } else if (data.timezone !== undefined) {
+                    var utcMs = Date.now() + (new Date().getTimezoneOffset() * 60000);
+                    var cityDate = new Date(utcMs + (data.timezone * 1000));
+                    dateEl.textContent = cityDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                } else {
+                    var now = new Date();
+                    dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
             }
 
             // Temperature Metrics
@@ -408,10 +461,30 @@
             var unitSymbolEl = document.getElementById('tvTempUnitSymbol');
             if (unitSymbolEl) unitSymbolEl.textContent = '°' + this.currentUnit;
 
-            // Condition Pill
+            // Intelligent Location-Aware Day/Night Determination
+            var isDayTime = true;
+            if (data.isDay !== undefined) {
+                isDayTime = !!data.isDay;
+            } else if (data.dt && data.sunriseRaw && data.sunsetRaw) {
+                isDayTime = (data.dt >= data.sunriseRaw && data.dt < data.sunsetRaw);
+            } else if (data.timezone !== undefined) {
+                var utcMs2 = Date.now() + (new Date().getTimezoneOffset() * 60000);
+                var cityHour = new Date(utcMs2 + (data.timezone * 1000)).getHours();
+                isDayTime = (cityHour >= 6 && cityHour < 19);
+            } else if (data.sunset && data.sunrise) {
+                var currentHour = new Date().getHours();
+                isDayTime = currentHour >= 6 && currentHour < 19;
+            }
+
+            // Condition Pill & Smart Sun/Moon Icon
             var condDesc = data.description || 'Partly Cloudy';
             var condEl = document.getElementById('tvConditionText');
             if (condEl) condEl.textContent = this.capitalize(condDesc);
+
+            var condIconEl = document.getElementById('tvConditionIcon');
+            if (condIconEl) {
+                condIconEl.innerHTML = this.getWeatherSvgIcon(condDesc, 18, isDayTime);
+            }
 
             // High / Low & Feels Like
             var feelsVal = this.convertTemp(data.feelsLike !== undefined ? data.feelsLike : data.temperature);
@@ -423,17 +496,7 @@
             }
 
             // Update 3D Engine State & Dynamic Weather Aurora Themes
-            var isDayTime = true;
             var isSunset = (condDesc.toLowerCase().indexOf('sunset') !== -1);
-
-            if (data.isDay !== undefined) {
-                isDayTime = data.isDay;
-            } else if (data.sunset && data.sunrise) {
-                var currentHour = new Date().getHours();
-                isDayTime = currentHour >= 6 && currentHour < 19;
-                if (currentHour === 18 || currentHour === 19) isSunset = true;
-            }
-
             this.updateAtmosphereTheme(condDesc, isDayTime, isSunset);
 
             if (this.weather3D) {
@@ -533,13 +596,19 @@
                 windNeedle.style.transform = 'rotate(' + (data.windDeg || 45) + 'deg)';
             }
 
-            // 3. UV Index
-            var uv = data.uvIndex !== undefined ? data.uvIndex : 3.0;
+            // 3. UV Index (Accurate Solar / Lunar Physics)
+            var uv = 0.0;
+            if (isDayTime) {
+                uv = data.uvIndex !== undefined ? data.uvIndex : 3.0;
+            } else {
+                uv = 0.0;
+            }
             var uvEl = document.getElementById('tvUvVal');
             var uvDescEl = document.getElementById('tvUvDesc');
             var uvFill = document.getElementById('uvFill');
-            var uvText = 'Moderate';
-            if (uv <= 2) uvText = 'Low';
+            var uvText = 'Low';
+            if (uv === 0) uvText = 'None';
+            else if (uv <= 2) uvText = 'Low';
             else if (uv <= 5) uvText = 'Moderate';
             else if (uv <= 7) uvText = 'High';
             else uvText = 'Very High';
@@ -605,7 +674,7 @@
             if (sunsetEl) sunsetEl.textContent = data.sunset || '7:42 PM';
 
             // Render Hourly, Interactive Curve Chart, and 7-Day Forecast
-            this.renderHourlyForecast(data.forecast);
+            this.renderHourlyForecast(data.forecast, isDayTime, data.timezone);
             this.renderTemperatureChart(data.forecast);
             this.renderWeeklyForecast(data.forecast, tempVal);
 
@@ -617,7 +686,7 @@
             }
         },
 
-        renderHourlyForecast: function (forecastList) {
+        renderHourlyForecast: function (forecastList, isDayTime, timezoneOffset) {
             var track = document.getElementById('hourlyTrack');
             if (!track) return;
             track.innerHTML = '';
@@ -652,11 +721,25 @@
 
             var self = this;
             items.forEach(function (it, idx) {
+                var itemIsDay = isDayTime;
+                if (idx > 0 && it.time) {
+                    var hourMatch = it.time.match(/(\d+):/);
+                    if (hourMatch) {
+                        var hVal = parseInt(hourMatch[1], 10);
+                        itemIsDay = (hVal >= 6 && hVal < 19);
+                    } else if (it.time.indexOf('PM') !== -1 || it.time.indexOf('AM') !== -1) {
+                        var isPM = it.time.indexOf('PM') !== -1;
+                        var hNum = parseInt(it.time, 10);
+                        if (isPM && hNum !== 12) hNum += 12;
+                        if (!isPM && hNum === 12) hNum = 0;
+                        itemIsDay = (hNum >= 6 && hNum < 19);
+                    }
+                }
                 var el = document.createElement('div');
                 el.className = 'hourly-item' + (idx === 0 ? ' active' : '');
                 el.innerHTML = [
                     '<span class="hourly-time">' + it.time + '</span>',
-                    self.getWeatherSvgIcon(it.desc, 28),
+                    self.getWeatherSvgIcon(it.desc, 28, itemIsDay),
                     '<span class="hourly-rain">' + it.rainChance + '%</span>',
                     '<span class="hourly-temp">' + it.temp + '°</span>'
                 ].join('');
@@ -1255,18 +1338,31 @@
             this.renderSavedCities();
         },
 
-        getWeatherSvgIcon: function (desc, size) {
+        getWeatherSvgIcon: function (desc, size, isDay) {
             desc = (desc || '').toLowerCase();
             size = size || 24;
+            var day = (isDay !== undefined) ? !!isDay : true;
 
-            if (desc.indexOf('rain') !== -1 || desc.indexOf('drizzle') !== -1) {
-                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M16 13v6M8 13v6M12 15v6M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>';
-            } else if (desc.indexOf('snow') !== -1) {
-                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M12 3v18M3 12h18M6 6l12 12M6 18L18 6"/></svg>';
+            if (desc.indexOf('thunder') !== -1 || desc.indexOf('storm') !== -1) {
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="13 11 9 17 15 17 11 23"/></svg>';
+            } else if (desc.indexOf('rain') !== -1 || desc.indexOf('drizzle') !== -1 || desc.indexOf('shower') !== -1) {
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><path d="M16 13v6M8 13v6M12 15v6M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>';
+            } else if (desc.indexOf('snow') !== -1 || desc.indexOf('ice') !== -1 || desc.indexOf('blizzard') !== -1) {
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 3v18M3 12h18M6 6l12 12M6 18L18 6"/></svg>';
             } else if (desc.indexOf('clear') !== -1 || desc.indexOf('sun') !== -1) {
-                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+                if (!day) {
+                    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+                } else {
+                    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+                }
+            } else if (desc.indexOf('partly') !== -1 || desc.indexOf('scattered') !== -1) {
+                if (!day) {
+                    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" stroke="#818cf8"/><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" stroke="#94a3b8"/></svg>';
+                } else {
+                    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2M4.93 4.93l1.41 1.41M2 12h2M20 12h2M19.07 4.93l-1.41 1.41" stroke="#f59e0b"/><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" stroke="#0284c7"/></svg>';
+                }
             } else {
-                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#8ed5ff" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
+                return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
             }
         },
 
@@ -1296,6 +1392,7 @@
         },
 
         setConditionPreset: function (cond, isDay, isSunset) {
+            this.isManualPresetActive = true;
             this.playChime();
             this.updateAtmosphereTheme(cond, isDay, isSunset);
 
@@ -1303,9 +1400,10 @@
                 this.weather3D.setCondition(cond, isDay, isSunset);
             }
             if (this.weatherData) {
-                this.weatherData.description = isSunset ? 'Golden Hour Sunset' : cond;
-                this.weatherData.isDay = isDay;
-                this.renderWeather(this.weatherData);
+                var clone = Object.assign({}, this.weatherData);
+                clone.description = isSunset ? 'Golden Hour Sunset' : cond;
+                clone.isDay = isDay;
+                this.renderWeather(clone);
             }
         },
 
@@ -1406,10 +1504,17 @@
         },
 
         /**
-         * Live OpenWeatherMap API Direct Query (Standalone Web Mode)
+         * Live OpenWeatherMap API Direct Query (Standalone Web Mode with In-Memory Caching)
          */
         fetchWeatherByCity: function (city) {
             var self = this;
+            var cacheKey = city.toLowerCase().trim();
+            var nowTs = Date.now();
+            if (this.weatherCache && this.weatherCache[cacheKey] && (nowTs - this.weatherCache[cacheKey].timestamp < 480000)) {
+                this.renderWeather(this.weatherCache[cacheKey].data);
+                return;
+            }
+
             var url = 'https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(city) + '&appid=' + this.apiKey + '&units=metric';
             var forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast?q=' + encodeURIComponent(city) + '&appid=' + this.apiKey + '&units=metric';
 
@@ -1447,12 +1552,30 @@
                             cpcb = self.calculateCpcbAqi(aqiRes.list[0].components);
                         }
 
+                        var cityTzOffset = cur.timezone !== undefined ? cur.timezone : 0;
+                        var dtUtc = cur.dt || Math.floor(Date.now() / 1000);
+                        var sunriseUtc = cur.sys ? cur.sys.sunrise : 0;
+                        var sunsetUtc = cur.sys ? cur.sys.sunset : 0;
+
+                        var isDay = true;
+                        if (sunriseUtc > 0 && sunsetUtc > 0) {
+                            isDay = (dtUtc >= sunriseUtc && dtUtc < sunsetUtc);
+                        } else {
+                            var localHour = new Date(Date.now() + (cityTzOffset * 1000) + (new Date().getTimezoneOffset() * 60000)).getHours();
+                            isDay = (localHour >= 6 && localHour < 19);
+                        }
+
                         var sunriseTime = '6:30 AM';
                         var sunsetTime = '7:30 PM';
-                        if (cur.sys) {
-                            sunriseTime = new Date(cur.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            sunsetTime = new Date(cur.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        if (sunriseUtc > 0 && sunsetUtc > 0) {
+                            var sRiseDate = new Date((sunriseUtc + cityTzOffset + (new Date().getTimezoneOffset() * 60)) * 1000);
+                            var sSetDate = new Date((sunsetUtc + cityTzOffset + (new Date().getTimezoneOffset() * 60)) * 1000);
+                            sunriseTime = sRiseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            sunsetTime = sSetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                         }
+
+                        var localCityDate = new Date(Date.now() + (cityTzOffset * 1000) + (new Date().getTimezoneOffset() * 60000));
+                        var localTimeStr = localCityDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                         var d = {
                             city: cur.name + ', ' + (cur.sys ? cur.sys.country : ''),
@@ -1476,9 +1599,17 @@
                             uvIndex: 3.5,
                             sunrise: sunriseTime,
                             sunset: sunsetTime,
-                            isDay: true,
+                            dt: dtUtc,
+                            timezone: cityTzOffset,
+                            isDay: isDay,
+                            sunriseRaw: sunriseUtc,
+                            sunsetRaw: sunsetUtc,
+                            localTime: localTimeStr,
                             forecast: fItems
                         };
+
+                        if (!self.weatherCache) self.weatherCache = {};
+                        self.weatherCache[cacheKey] = { timestamp: nowTs, data: d };
                         self.renderWeather(d);
                     }).catch(function () {
                         self.fallbackLocalCity(city);
@@ -1851,6 +1982,7 @@
         try {
             var data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
             console.log('Received weather data from Android:', data);
+            app.isManualPresetActive = false;
             app.renderWeather(data);
         } catch (e) {
             console.error('Failed to parse weather data from Android:', e);

@@ -29,6 +29,12 @@ public class WeatherData {
     private int windDeg;
     private double uvIndex;
     private List<ForecastItem> forecast;
+    private long dt;
+    private int timezone;
+    private boolean isDay;
+    private long sunriseRaw;
+    private long sunsetRaw;
+    private String localTimeString;
 
     public WeatherData(String city, double temperature, String description, int humidity, double windSpeed, double visibility, int aqi, List<ForecastItem> forecast) {
         this(city, temperature, temperature, temperature - 2, temperature + 2, description, humidity, windSpeed, visibility, aqi, 1013, forecast);
@@ -47,6 +53,10 @@ public class WeatherData {
     }
 
     public WeatherData(String city, double latitude, double longitude, double temperature, double feelsLike, double tempMin, double tempMax, String description, int humidity, double windSpeed, double visibility, int aqi, String aqiCategory, String aqiProminentPollutant, double pm25, double pm10, double no2, double so2, double co, double o3, int pressure, String sunrise, String sunset, int windDeg, double uvIndex, List<ForecastItem> forecast) {
+        this(city, latitude, longitude, temperature, feelsLike, tempMin, tempMax, description, humidity, windSpeed, visibility, aqi, aqiCategory, aqiProminentPollutant, pm25, pm10, no2, so2, co, o3, pressure, sunrise, sunset, windDeg, uvIndex, forecast, System.currentTimeMillis() / 1000L, 0, true, 0, 0, null);
+    }
+
+    public WeatherData(String city, double latitude, double longitude, double temperature, double feelsLike, double tempMin, double tempMax, String description, int humidity, double windSpeed, double visibility, int aqi, String aqiCategory, String aqiProminentPollutant, double pm25, double pm10, double no2, double so2, double co, double o3, int pressure, String sunrise, String sunset, int windDeg, double uvIndex, List<ForecastItem> forecast, long dt, int timezone, boolean isDay, long sunriseRaw, long sunsetRaw, String localTimeString) {
         this.city = city;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -73,6 +83,12 @@ public class WeatherData {
         this.windDeg = windDeg;
         this.uvIndex = uvIndex;
         this.forecast = forecast;
+        this.dt = dt;
+        this.timezone = timezone;
+        this.isDay = isDay;
+        this.sunriseRaw = sunriseRaw;
+        this.sunsetRaw = sunsetRaw;
+        this.localTimeString = localTimeString;
     }
 
     public String getCity() {
@@ -177,6 +193,30 @@ public class WeatherData {
 
     public List<ForecastItem> getForecast() {
         return forecast;
+    }
+
+    public long getDt() {
+        return dt;
+    }
+
+    public int getTimezone() {
+        return timezone;
+    }
+
+    public boolean isDay() {
+        return isDay;
+    }
+
+    public long getSunriseRaw() {
+        return sunriseRaw;
+    }
+
+    public long getSunsetRaw() {
+        return sunsetRaw;
+    }
+
+    public String getLocalTimeString() {
+        return localTimeString;
     }
 
     public static class ForecastItem {

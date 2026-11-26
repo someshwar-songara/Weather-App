@@ -212,29 +212,50 @@ public class WeatherAPIClient {
             CpcbAqiResult cpcb = calculateCpcbAqi(pm25, pm10, no2, so2, co, o3);
             Log.d(TAG, "CPCB NAQI computed: " + cpcb.aqi + " (" + cpcb.category + "), Dominant: " + cpcb.dominantPollutant + ", PM2.5=" + pm25 + ", PM10=" + pm10);
 
-            // Parse Sunrise & Sunset
+            // Precise Location-Aware Day/Night & Sunrise/Sunset Engine
             JSONObject sys = currentWeatherJson.has("sys") ? currentWeatherJson.getJSONObject("sys") : null;
-            String sunrise = "06:30 AM";
-            String sunset = "07:30 PM";
+            long dt = currentWeatherJson.optLong("dt", System.currentTimeMillis() / 1000L);
+            int timezoneOffset = currentWeatherJson.optInt("timezone", 0);
+            long sunriseRaw = 0;
+            long sunsetRaw = 0;
             if (sys != null) {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault());
-                if (sys.has("sunrise")) {
-                    sunrise = sdf.format(new java.util.Date(sys.getLong("sunrise") * 1000L));
-                }
-                if (sys.has("sunset")) {
-                    sunset = sdf.format(new java.util.Date(sys.getLong("sunset") * 1000L));
-                }
+                sunriseRaw = sys.optLong("sunrise", 0);
+                sunsetRaw = sys.optLong("sunset", 0);
             }
+
+            boolean isDay;
+            if (sunriseRaw > 0 && sunsetRaw > 0) {
+                isDay = (dt >= sunriseRaw && dt < sunsetRaw);
+            } else {
+                long localEpoch = dt + timezoneOffset;
+                int localHour = (int) ((localEpoch / 3600) % 24);
+                if (localHour < 0) localHour += 24;
+                isDay = (localHour >= 6 && localHour < 19);
+            }
+
+            // Accurate location-based sunrise, sunset, and local date/time formatting
+            java.util.TimeZone cityTz = new java.util.SimpleTimeZone(timezoneOffset * 1000, "CityTimeZone");
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("h:mm a", java.util.Locale.ENGLISH);
+            sdf.setTimeZone(cityTz);
+            String sunrise = sunriseRaw > 0 ? sdf.format(new java.util.Date(sunriseRaw * 1000L)) : "06:30 AM";
+            String sunset = sunsetRaw > 0 ? sdf.format(new java.util.Date(sunsetRaw * 1000L)) : "07:30 PM";
+
+            java.text.SimpleDateFormat localTimeSdf = new java.text.SimpleDateFormat("EEE, MMM d · h:mm a", java.util.Locale.ENGLISH);
+            localTimeSdf.setTimeZone(cityTz);
+            String localTimeStr = localTimeSdf.format(new java.util.Date(dt * 1000L));
 
             int windDeg = 0;
             if (currentWeatherJson.has("wind") && currentWeatherJson.getJSONObject("wind").has("deg")) {
                 windDeg = currentWeatherJson.getJSONObject("wind").getInt("deg");
             }
 
-            double uvIndex = 4.0;
-            if (currentWeatherJson.has("clouds") && currentWeatherJson.getJSONObject("clouds").has("all")) {
-                int clouds = currentWeatherJson.getJSONObject("clouds").getInt("all");
-                uvIndex = Math.max(1.0, Math.round((9.0 - (clouds / 15.0)) * 10.0) / 10.0);
+            double uvIndex = 0.0;
+            if (isDay) {
+                uvIndex = 4.0;
+                if (currentWeatherJson.has("clouds") && currentWeatherJson.getJSONObject("clouds").has("all")) {
+                    int clouds = currentWeatherJson.getJSONObject("clouds").getInt("all");
+                    uvIndex = Math.max(1.0, Math.round((8.0 - (clouds / 16.0)) * 10.0) / 10.0);
+                }
             }
 
             double lat = currentWeatherJson.has("coord") ? currentWeatherJson.getJSONObject("coord").optDouble("lat", 23.1789) : 23.1789;
@@ -245,7 +266,8 @@ public class WeatherAPIClient {
                     humidity, windSpeed, visibility, cpcb.aqi, cpcb.category,
                     cpcb.dominantPollutant, cpcb.pm25, cpcb.pm10, cpcb.no2,
                     cpcb.so2, cpcb.co, cpcb.o3, pressure, sunrise, sunset,
-                    windDeg, uvIndex, forecast
+                    windDeg, uvIndex, forecast,
+                    dt, timezoneOffset, isDay, sunriseRaw, sunsetRaw, localTimeStr
             );
         }
     }

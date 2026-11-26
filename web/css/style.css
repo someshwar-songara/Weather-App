@@ -39,10 +39,10 @@
     --transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Light Theme Variables */
+/* Light Theme Variables (Primary Visual Experience) */
 [data-theme="light"] {
-    --surface-lowest: #f1f5f9;
-    --surface: #f8fafc;
+    --surface-lowest: #f0f4f9;
+    --surface: #ffffff;
     --surface-container: #ffffff;
     --surface-high: #e2e8f0;
     --surface-highest: #cbd5e1;
@@ -50,16 +50,16 @@
     --primary-cyan: #0284c7;
     --primary-light: #0369a1;
     --primary-container: #e0f2fe;
-    --primary-glow: rgba(2, 132, 199, 0.2);
+    --primary-glow: rgba(2, 132, 199, 0.18);
 
     --secondary-indigo: #4f46e5;
-    --secondary-glow: rgba(79, 70, 229, 0.15);
+    --secondary-glow: rgba(79, 70, 229, 0.12);
 
     --text-white: #0f172a;
     --text-variant: #475569;
-    --text-muted: #94a3b8;
+    --text-muted: #64748b;
     --border-glass: rgba(0, 0, 0, 0.08);
-    --border-glass-specular: rgba(0, 0, 0, 0.14);
+    --border-glass-specular: rgba(255, 255, 255, 0.95);
 }
 
 /* Base Document Reset */
@@ -210,6 +210,56 @@ body {
 }
 .aurora-bg.cloudy-theme .sphere-3 {
     background: radial-gradient(circle, rgba(148, 163, 184, 0.4) 0%, transparent 70%);
+}
+
+/* Light Theme Soft Atmospheric Aurora */
+[data-theme="light"] .aurora-bg {
+    opacity: 0.85;
+}
+
+[data-theme="light"] .aurora-sphere {
+    opacity: 0.35;
+    filter: blur(120px);
+}
+
+[data-theme="light"] .aurora-bg.sunny-theme .sphere-1 {
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.45) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.sunny-theme .sphere-2 {
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.sunny-theme .sphere-3 {
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 70%);
+}
+
+[data-theme="light"] .aurora-bg.night-theme .sphere-1 {
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.night-theme .sphere-2 {
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.28) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.night-theme .sphere-3 {
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+}
+
+[data-theme="light"] .aurora-bg.rain-theme .sphere-1 {
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.4) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.rain-theme .sphere-2 {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.rain-theme .sphere-3 {
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+}
+
+[data-theme="light"] .aurora-bg.sunset-theme .sphere-1 {
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.45) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.sunset-theme .sphere-2 {
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.35) 0%, transparent 70%);
+}
+[data-theme="light"] .aurora-bg.sunset-theme .sphere-3 {
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
 }
 
 @keyframes drift-1 {
@@ -885,6 +935,21 @@ body {
     align-items: center;
     gap: 7px;
     box-shadow: 0 0 16px -2px rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="light"] .temperature-display {
+    color: #0f172a;
+}
+
+[data-theme="light"] .temp-unit-symbol {
+    color: #0284c7;
+}
+
+[data-theme="light"] .weather-condition-pill {
+    background: rgba(2, 132, 199, 0.08);
+    border-color: rgba(2, 132, 199, 0.22);
+    color: #0284c7;
+    box-shadow: 0 2px 10px -2px rgba(2, 132, 199, 0.15);
 }
 
 .high-low-capsule {
@@ -1843,6 +1908,19 @@ body {
 
 .dock-btn.active svg {
     transform: scale(1.1);
+}
+
+[data-theme="light"] .dock-btn {
+    color: #64748b;
+}
+
+[data-theme="light"] .dock-btn:hover {
+    color: #0284c7;
+}
+
+[data-theme="light"] .dock-btn.active {
+    background: rgba(2, 132, 199, 0.12);
+    color: #0284c7;
 }
 
 /* ==========================================================================
